@@ -35,24 +35,22 @@ public class Arbitre extends Thread {
 		sortie.println(texte);
 	}
 	
-	public boolean fin(String str1,int p1, String str2,int p2, PrintWriter sortie1, PrintWriter sortie2)
+	public boolean fin(int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
 		//Fonction qui envoie résultats du match si match est terminé
-		if((str1.equals("abandon")) || p2>3 ){
+		//Pour l'instant pour gagner -> victoire = 3 mais ça serait bien de le mettre en attribut de la classe afin de l'instancier dans le constructeur
+		int point_pour_gagner=3;
+		
+		if(p2>=point_pour_gagner)
+		{
 			emettre("victoire",sortie2);
-			if((str1.equals("abandon")))
-					emettre("abandon",sortie1);
-			else
-				emettre("défaite",sortie1);
+			emettre("defaite",sortie1);
 			
 			return true;
 		}
-		if((str2.equals("abandon")) || p1>3 ){
+		if(p1>=point_pour_gagner){
 			emettre("victoire",sortie1);
-			if((str2.equals("abandon")))
-					emettre("abandon",sortie2);
-			else
-				emettre("défaite",sortie2);
+			emettre("defaite",sortie2);
 			
 			return true;
 		}
@@ -60,6 +58,23 @@ public class Arbitre extends Thread {
 		
 	}
 	
+	public boolean abandon(String str1, String str2, PrintWriter sortie1, PrintWriter sortie2)
+	{
+		//Fonction qui envoie résultats du match si un joueur a abandonné
+				if(str1.equals("abandon")){
+					emettre("victoire",sortie2);
+					emettre("abandon",sortie1);
+					
+					return true;
+				}
+				if(str2.equals("abandon")){
+					emettre("victoire",sortie1);
+					emettre("abandon",sortie2);
+					
+					return true;
+				}
+				return false;
+	}
 	public void diffuserResultat(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
 		//Fonction qui envoie aux joueurs les résultats du tour de jeu 
@@ -102,8 +117,8 @@ public class Arbitre extends Thread {
 				String str1 = recevoir(entree1);
 				String str2 = recevoir(entree2);
 				
-				//Test si la partie est terminé suite au dernier tour ou si un des joueurs veut abandonné
-				if(fin(str1,p1,str2,p2,sortie1,sortie2))
+				//Test si un joueur veut abandonné la partie
+				if(abandon(str1,str2,sortie1,sortie2))
 					break; //Fin de partie donc on sort de la boucle while true.
 				
 				int result = jeu(str1,str2); //Gére un tour de jeu
@@ -114,6 +129,8 @@ public class Arbitre extends Thread {
 				else if(result==1)
 					p1++;
 				
+				if(fin(p1,p2,sortie1,sortie2))//Si un joueur atteint le max de point, match terminé
+					break;//Fin de partie donc on sort de la boucle while true.
 				diffuserResultat(result,p1,p2,sortie1,sortie2); //Diffuse résultat du tour aux joueurs
 			}
 
@@ -121,7 +138,6 @@ public class Arbitre extends Thread {
 			entree2.close();
 			sortie2.close();
 			sortie1.close();
-			soc.close();
 		} catch (IOException e) {
 			e.getMessage();
 		}
