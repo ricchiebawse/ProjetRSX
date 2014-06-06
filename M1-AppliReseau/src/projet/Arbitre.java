@@ -11,8 +11,9 @@ import java.util.ArrayList;
 
 
 public class Arbitre extends Thread {
-	
+	//Classe servant de serveur de jeu de pierre feuille ciseau lezard spoke, message en TCP
 	private ServerSocket s;
+	/*Les deux sockets n'ont pour l'isntant pas de vrai sens (elles ont en mémoire les sockets des joueurs du dernier match en cours)*/
 	private static Socket soc=null;
 	private static Socket soc2=null;
 	private static String joueur1;  // Nom joueur 1 de la dernière partie commencée
@@ -58,6 +59,26 @@ public class Arbitre extends Thread {
 		
 	}
 	
+	public void InfoAdversaire(String str, PrintWriter sortie, Socket soc)
+	{
+		/* Methode qui envoie les informations de l'adversaire au joueur qui a envoyé info au serveur*/
+		/* A modifier dans le prochain jeu créé pour que le joueur en question demande pour quel adversaire il souhaite recevoir les données*/
+		if(str.equals("info"))
+		{
+			sortie.println(soc.getInetAddress().toString());
+			sortie.println(soc.getPort());
+		}
+	}
+	
+	public String AttenteInfoChat(String str, BufferedReader entree)
+	{
+		//Si utilisateur a demandé des infos, l'autre user doit attendre qu'il veuille jouer pour continuer la partie
+		if(str.equals("info"))
+		{
+			return recevoir(entree);
+		}
+		return str;
+	}
 	public boolean abandon(String str1, String str2, PrintWriter sortie1, PrintWriter sortie2)
 	{
 		//Fonction qui envoie résultats du match si un joueur a abandonné
@@ -103,12 +124,15 @@ public class Arbitre extends Thread {
 	}
 	public void run() {
 		try {
-			BufferedReader entree1 = new BufferedReader (new InputStreamReader (soc.getInputStream()));
-			PrintWriter sortie1 = new PrintWriter (soc.getOutputStream(), true);
-			BufferedReader entree2 = new BufferedReader (new InputStreamReader (soc2.getInputStream()));
-			PrintWriter sortie2 = new PrintWriter (soc2.getOutputStream(), true);
+			Socket socjoueur1=soc;
+			Socket socjoueur2=soc2;
+			BufferedReader entree1 = new BufferedReader (new InputStreamReader (socjoueur1.getInputStream()));
+			PrintWriter sortie1 = new PrintWriter (socjoueur1.getOutputStream(), true);
+			BufferedReader entree2 = new BufferedReader (new InputStreamReader (socjoueur2.getInputStream()));
+			PrintWriter sortie2 = new PrintWriter (socjoueur2.getOutputStream(), true);
 			soc=null;
-			soc2=null;
+			soc2=null; 
+			/*Point de joueur1 et joueur2*/
 			int p1=0;
 			int p2=0;
 			
@@ -116,6 +140,14 @@ public class Arbitre extends Thread {
 			while(true) {
 				String str1 = recevoir(entree1);
 				String str2 = recevoir(entree2);
+				
+				//Test is un des utilisateur souhaite recevoir les données d'un adversaire*/
+				InfoAdversaire(str1,sortie1,socjoueur2);
+				InfoAdversaire(str2,sortie2,socjoueur1);	
+					
+				//Test si un utilisateur souhaite utiliser le chat
+				str1 = AttenteInfoChat(str1, entree1);
+				str2 = AttenteInfoChat(str2, entree2);
 				
 				//Test si un joueur veut abandonné la partie
 				if(abandon(str1,str2,sortie1,sortie2))
@@ -189,6 +221,14 @@ public class Arbitre extends Thread {
 		{
 			return 1;
 		}
+		if(b.equals("lezard"))
+		{
+			return 1;
+		}
+		if(b.equals("spoke"))
+		{
+			return 2;
+		}
 	}
 	if(a.equals("feuille"))
 	{
@@ -203,6 +243,14 @@ public class Arbitre extends Thread {
 		if(b.equals("ciseau"))
 		{
 			return 2;
+		}
+		if(b.equals("lezard"))
+		{
+			return 2;
+		}
+		if(b.equals("spoke"))
+		{
+			return 1;
 		}
 	}
 	if(a.equals("ciseau"))
@@ -219,15 +267,68 @@ public class Arbitre extends Thread {
 		{
 			return 0;
 		}
+		if(b.equals("lezard"))
+		{
+			return 1;
+		}
+		if(b.equals("spoke"))
+		{
+			return 2;
+		}
 	}
-	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entré
+	if(a.equals("lezard"))
+	{
+		if(b.equals("pierre"))
+		{
+			return 2;
+		}
+		if(b.equals("feuille"))
+		{
+			return 1;
+		}
+		if(b.equals("ciseau"))
+		{
+			return 2;
+		}
+		if(b.equals("lezard"))
+		{
+			return 0;
+		}
+		if(b.equals("spoke"))
+		{
+			return 1;
+		}
+	}
+	if(a.equals("spoke"))
+	{
+		if(b.equals("pierre"))
+		{
+			return 1;
+		}
+		if(b.equals("feuille"))
+		{
+			return 2;
+		}
+		if(b.equals("ciseau"))
+		{
+			return 1;
+		}
+		if(b.equals("lezard"))
+		{
+			return 2;
+		}
+		if(b.equals("spoke"))
+		{
+			return 0;
+		}
+	}
+	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entré (Gérer une nouvelle demande à l'utilisateur?)
 	}
 	public static void main(String[] args) {
 		int i = 0;
-		System.out.println("Serveur multijoueurs de jeu de pierre feuille ciseau");
+		System.out.println("Serveur multijoueurs de jeu de pierre feuille ciseau lezard spoke");
 		try {		
 			ServerSocket s = new ServerSocket(8080);
-			
 			while(i < 10) {
 				Socket socket = s.accept();
 				Arbitre smt = new Arbitre(socket);
