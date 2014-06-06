@@ -11,7 +11,9 @@ import java.util.ArrayList;
 
 
 public class Arbitre extends Thread {
+	
 	//Classe servant de serveur de jeu de pierre feuille ciseau lezard spoke, message en TCP
+	
 	private ServerSocket s;
 	/*Les deux sockets n'ont pour l'isntant pas de vrai sens (elles ont en mémoire les sockets des joueurs du dernier match en cours)*/
 	private static Socket soc=null;

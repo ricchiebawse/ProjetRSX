@@ -11,6 +11,7 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Joueur extends Thread {
+	
 	//Classe joueur qui sert à se connecter à un serveur de jeu en TCP
 	//Rendre classe générique!
 	

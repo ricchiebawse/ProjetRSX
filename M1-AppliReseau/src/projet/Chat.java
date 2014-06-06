@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Chat extends Thread {
+	
 	//Classe servant à à recevoir de messages UDP et envoyer des messages UDP en sachant l'ip et le port
 	
 	private String domain;// Ne sert pas car on envoie de socket sur la même adrese ip
