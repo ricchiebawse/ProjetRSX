@@ -23,6 +23,12 @@ public class Chat extends Thread {
 			DatagramPacket packet= new DatagramPacket(buf,buf.length);
 			
 			while(true){
+				try {
+					IHMChatTest frame = new IHMChatTest();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				socket.receive(packet);
 				String txtString = new String(packet.getData(), 0 ,packet.getLength(),"ASCII");
 				StaticMethods.consolePrintln("Message recu de "+nameOpponent+" ("+packet.getAddress().toString().substring(1)+":"+port+") : " +txtString);

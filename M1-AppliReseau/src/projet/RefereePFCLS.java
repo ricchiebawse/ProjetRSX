@@ -17,12 +17,12 @@ public class RefereePFCLS extends Thread {
 	//Classe servant de serveur de jeu de pierre feuille ciseau lezard spoke, message en TCP
 	
 	private ServerSocket s;
-	//Sockets de service avec les deux DERNIERS joueurs connectés.
+	//Sockets de service avec les deux DERNIERS joueurs connectÔøΩs.
 	private static Socket socLastJoueur1=null;
 	private static Socket socLastJoueur2=null;
 	
-	private static String nameJoueur1;  // Nom joueur 1 de la derniere partie commencée
-	private static String nameJoueur2; // Nom joueur 2 de la derniere partie commencée
+	private static String nameJoueur1;  // Nom joueur 1 de la derniere partie commencÔøΩe
+	private static String nameJoueur2; // Nom joueur 2 de la derniere partie commencÔøΩe
 
 
 	
@@ -48,7 +48,7 @@ public class RefereePFCLS extends Thread {
 	
 	private void sendOpponentData(String str, PrintWriter sortie, Socket soc)
 	{
-		//Envoie de l'IP et du port d'un joueur à l'autre joueur.
+		//Envoie de l'IP et du port d'un joueur ÔøΩ l'autre joueur.
 		if(str.equals("info"))
 		{
 			sortie.println(soc.getInetAddress().toString());
@@ -58,7 +58,7 @@ public class RefereePFCLS extends Thread {
 	
 	private String waitingForChatData(String str, BufferedReader entree)
 	{
-		//Si utilisateur a demandÈ des infos, l'autre user doit attendre qu'il veuille jouer pour continuer la partie
+		//Si utilisateur a demandÔøΩ des infos, l'autre user doit attendre qu'il veuille jouer pour continuer la partie
 		if(str.equals("info"))
 		{
 			return StaticMethods.receiveString(entree);
@@ -68,7 +68,7 @@ public class RefereePFCLS extends Thread {
 	
 	private boolean isAbandon(String str1, String str2, PrintWriter sortie1, PrintWriter sortie2)
 	{
-		//Envoie des résultats du match si Abandon.
+		//Envoie des rÔøΩsultats du match si Abandon.
 				if(str1.equals("abandon")){
 					StaticMethods.sendString("victoire",sortie2);
 					StaticMethods.sendString("abandon",sortie1);
@@ -86,11 +86,11 @@ public class RefereePFCLS extends Thread {
 	
 	private void spreadTurnResults(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
-		//Envoie aux joueurs des resultats du tour terminé.
+		//Envoie aux joueurs des resultats du tour terminÔøΩ.
 		
 		if(result==3)
 		{
-			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de rÈitÈrer sa commande ?
+			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de rÔøΩitÔøΩrer sa commande ?
 			StaticMethods.sendString("probleme"+"/ points joueur :"+p1,sortie1);
 			StaticMethods.sendString("probleme"+"/ points joueur :"+p2,sortie2);
 		}
@@ -121,7 +121,7 @@ public class RefereePFCLS extends Thread {
 			BufferedReader entreeJoueur2 = new BufferedReader (new InputStreamReader (socJoueur2.getInputStream()));
 			PrintWriter sortieJoueur2 = new PrintWriter (socJoueur2.getOutputStream(), true);
 			
-			//Ré-initialisation à NULL des deux attributs socLastJoueurX necessaire a la creation d'autres parties
+			//RÔøΩ-initialisation ÔøΩ NULL des deux attributs socLastJoueurX necessaire a la creation d'autres parties
 			socLastJoueur1=null;
 			socLastJoueur2=null; 
 			
@@ -131,7 +131,7 @@ public class RefereePFCLS extends Thread {
 			
 			
 			while(true) {//UN tour de cette boucle corresponds a UN tour de jeu.
-				//TODO : réorganiser le code du While, certaines fonctions ne semblent pas nécessaire, d'autres sont à retravailler (ex : spreadTurnResults...)
+				//TODO : rÔøΩorganiser le code du While, certaines fonctions ne semblent pas nÔøΩcessaire, d'autres sont ÔøΩ retravailler (ex : spreadTurnResults...)
 				
 				String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 				String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
@@ -207,7 +207,7 @@ public class RefereePFCLS extends Thread {
 	}
 
 	private int makeGameTurn(String a, String b){
-		// Règle du jeu PFCLS
+		// RÔøΩgle du jeu PFCLS
 	if(a.equals("pierre"))
 	{
 		if(b.equals("pierre"))
@@ -323,7 +323,7 @@ public class RefereePFCLS extends Thread {
 			return 0;
 		}
 	}
-	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entrÈ (GÈrer une nouvelle demande ‡ l'utilisateur?)
+	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entrÔøΩ (GÔøΩrer une nouvelle demande ÔøΩ l'utilisateur?)
 	}
 	
 	
@@ -336,7 +336,7 @@ public class RefereePFCLS extends Thread {
 				Socket socket = s.accept();
 				RefereePFCLS smt = new RefereePFCLS(socket);
 				
-				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectés au serveur.
+				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectÔøΩs au serveur.
 				{
 					//Permet d'envoyer le nom de l'aversaire au joueur sans entrer dans le run
 					//FAIT VITE, A OPTIMISER SI POSSIBLE
@@ -351,6 +351,7 @@ public class RefereePFCLS extends Thread {
 				}
 				++i; 
 			}
+			
 			
 			
 			s.close();

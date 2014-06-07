@@ -87,6 +87,8 @@ public class Player extends Thread {
 							//StaticMethods.consolePrintln("DonnÈes de l'adversaire reÁu.");
 						}
 						try {
+							
+							//TODO : Faire Pop une fenêtre de discussion
 							chat.sendMsg(ipOpponent, portOpponent);
 						} catch (SocketException e) {
 							// TODO Auto-generated catch block
