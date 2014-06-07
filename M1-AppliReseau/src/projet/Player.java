@@ -15,15 +15,15 @@ public class Player extends Thread {
 	//Classe joueur qui sert de se connecter a un serveur de jeu en TCP
 	//TODO : L'utilisation d'un Thread est-elle necessaire ?
 	
-	private String domain;//Domain auquel on se connecte pour joueur : IP du serveur
-	private int port;//Port du serveur
-	private String name;
+	private String domainServer;//Domain auquel on se connecte pour joueur : IP du serveur
+	private int portServer;//Port du serveur
+	private String myName;
 	private Socket soc;
 	BufferedReader entree;
 	PrintWriter sortie;
-	int gameTurn;
+	int gameTurn=1;
 	
-	/*TODO: A modifier pour gérer plusieurs adversaires (liste) (OU PAS ?)*/
+	/*TODO: A modifier pour gÃ©rer plusieurs adversaires (liste) (OU PAS ?)*/
 	String nameOpponent;//Nom de l'adversaire
 	String ipOpponent="";//IP de l'adversaire
 	int portOpponent;//Port de l'adversaire
@@ -34,8 +34,8 @@ public class Player extends Thread {
 		//Connexion a l'arbitrePFCLS
 		
 		//TODO : Ici on se connecte a l'arbitre directement avec le meme domain et port que le joueur
-		//car on joue UNIQUEMENT en local pour l'instant. Mais on est censŽ pouvoir jouer en reseau,
-		//donc il faudra s'occuper de a.
+		//car on joue UNIQUEMENT en local pour l'instant. Mais on est censÃ© pouvoir jouer en reseau,
+		//donc il faudra s'occuper de Ã§a.
 		
 		
 		soc = null;
@@ -51,65 +51,48 @@ public class Player extends Thread {
 			e.printStackTrace();
 		}
 		
-		sortie.println(name); // Envoie du nom du joueur a l'arbitre afin qu'il le diffuse a l'autre joueur
+		sortie.println(myName); // Envoie du nom du joueur a l'arbitre afin qu'il le diffuse a l'autre joueur
 		StaticMethods.consolePrintln("recherche de connexion avec l'autre joueur...");
 		
-		//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connectŽ ˆ l'arbitre).
+		//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connectï¿½ ï¿½ l'arbitre).
 		nameOpponent = StaticMethods.receiveString(entree); 
 		
 	}
 
 	public void run() {
 		try {	
-			connectToReferee(this.domain, this.port);
+			connectToReferee(this.domainServer, this.portServer);
 			if(soc==null)
 			{
-				StaticMethods.consolePrintln("Connexion a échouée");
+				StaticMethods.consolePrintln("Connexion a Ã©chouÃ©e");
 			}
 			else
 			{
-				StaticMethods.consolePrintln("Connextion effectuée avec " + nameOpponent);
+				StaticMethods.consolePrintln("Connextion effectuÃ©e avec " + nameOpponent);
 				StaticMethods.consolePrintln("Bon match !");
 				
-				//Chat : classe permettant de chatter avec son adversaire
-				Chat chat = new Chat(soc.getLocalPort(), nameOpponent);
-				gameTurn=1;
-				while(true) {
-					StaticMethods.consolePrintln("Menu : 1) jouer (par defaut)\n2) chatter");
-					String choice = StaticMethods.getKeyboarding();
-					if(choice.equals("2"))//Le joueur decide de chatter avec son adversaire
-					{
-						
-						if(ipOpponent.equals("")){//Si on a pas encore les donnees de l'adversaire.
-							StaticMethods.sendString("info", sortie);
-							ipOpponent = StaticMethods.receiveString(entree);
-							portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
-							//StaticMethods.consolePrintln("Données de l'adversaire reçu.");
-						}
-						try {
-							
-							//TODO : Faire Pop une fentre de discussion
-							chat.sendMsg(ipOpponent, portOpponent);
-						} catch (SocketException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}		
-						
-					}
-					else
-					{//Le joueur decide de jouer son tour
-						
+				//On recupÃ¨re les informations de son adversaires : IP + PORT : Pour discuter avec lui par UDP
+				if(ipOpponent.equals("")){//Si on a pas encore les donnees de l'adversaire.
+					StaticMethods.sendString("info", sortie);
+					ipOpponent = StaticMethods.receiveString(entree);
+					portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
+				}
+				
+				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenÃªtre IHM
+				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
+				
+				while(true) {//UN parcours de cette boucle corresponds Ã  UN tour de Jeu.
+											
 						//Deroulement d'un tour de jeu.
 						
-						StaticMethods.consolePrintln("Tour n° "+ gameTurn);
+						StaticMethods.consolePrintln("Tour "+ gameTurn);
 						StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
-						//demande a l'utilisateur la saisie de son choix
 						String texte = StaticMethods.getKeyboarding();
 						StaticMethods.sendString(texte, sortie);
 						String turnRslt = StaticMethods.receiveString(entree);
 						
 						StaticMethods.consolePrintln("Mon Choix --> " + texte );
-						StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
+						StaticMethods.consolePrintln("\t RÃ©sultat --> " + turnRslt);
 
 						gameTurn++;
 
@@ -117,7 +100,7 @@ public class Player extends Thread {
 							break;
 								
 				}
-			}
+				
 			entree.close();
 			sortie.close();
 			soc.close();
@@ -129,16 +112,15 @@ public class Player extends Thread {
 	}
 	
 	private boolean isGameOver(String rep){
-		
 		//Verification de la fin de jeu (Game Over).
 		
 		if(rep.equals("defaite")||rep.equals("victoire")||rep.equals("abandon")){
 			if((rep.equals("abandon")))
-				StaticMethods.consolePrintln("Vous avez abandonné la partie");
+				StaticMethods.consolePrintln("Vous avez abandonnï¿½ la partie");
 			else if((rep.equals("defaite")))
 				StaticMethods.consolePrintln("Vous avez perdu la partie");
 			else
-				StaticMethods.consolePrintln("Vous avez gagné la partie");	
+				StaticMethods.consolePrintln("Vous avez gagnï¿½ la partie");	
 			
 			return true;
 		}
@@ -149,18 +131,18 @@ public class Player extends Thread {
 		StaticMethods.consolePrintln("Quelle est votre nom?");
 		String name = StaticMethods.getKeyboarding();
 		StaticMethods.consolePrintln("Bienvenue "+ name +" !");
-		this.name=name;
-		this.domain="localhost";
-		this.port=8080;
+		this.myName=name;
+		this.domainServer="localhost";
+		this.portServer=8080;
 	}
 	
 	public Player(String domain, int port) {
 		StaticMethods.consolePrintln("Quelle est votre nom?");
 		String name = StaticMethods.getKeyboarding();
 		StaticMethods.consolePrintln("Bienvenue "+ name +" !");
-		this.name=name;
-		this.domain=domain;
-		this.port=port;
+		this.myName=name;
+		this.domainServer=domain;
+		this.portServer=port;
 	}
 
 	public static void main(String[] args){
