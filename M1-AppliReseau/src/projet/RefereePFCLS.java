@@ -48,24 +48,14 @@ public class RefereePFCLS extends Thread {
 	
 	private void sendOpponentData(String str, PrintWriter sortie, Socket soc)
 	{
-		//Envoie de l'IP et du port d'un joueur � l'autre joueur.
+		//Envoie de l'IP et du port d'un joueur à l'autre joueur.
 		if(str.equals("info"))
 		{
 			sortie.println(soc.getInetAddress().toString());
 			sortie.println(soc.getPort());
 		}
 	}
-	
-	private String waitingForChatData(String str, BufferedReader entree)
-	{
-		//Si utilisateur a demand� des infos, l'autre user doit attendre qu'il veuille jouer pour continuer la partie
-		if(str.equals("info"))
-		{
-			return StaticMethods.receiveString(entree);
-		}
-		return str;
-	}
-	
+
 	private boolean isAbandon(String str1, String str2, PrintWriter sortie1, PrintWriter sortie2)
 	{
 		//Envoie des r�sultats du match si Abandon.
@@ -86,11 +76,12 @@ public class RefereePFCLS extends Thread {
 	
 	private void spreadTurnResults(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
-		//Envoie aux joueurs des resultats du tour termin�.
+		//Envoie aux joueurs des resultats du tour terminé.
+		//TODO : A retravailler
 		
 		if(result==3)
 		{
-			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de r�it�rer sa commande ?
+			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de réitérer sa commande ?
 			StaticMethods.sendString("probleme"+"/ points joueur :"+p1,sortie1);
 			StaticMethods.sendString("probleme"+"/ points joueur :"+p2,sortie2);
 		}
@@ -121,29 +112,26 @@ public class RefereePFCLS extends Thread {
 			BufferedReader entreeJoueur2 = new BufferedReader (new InputStreamReader (socJoueur2.getInputStream()));
 			PrintWriter sortieJoueur2 = new PrintWriter (socJoueur2.getOutputStream(), true);
 			
-			//R�-initialisation � NULL des deux attributs socLastJoueurX necessaire a la creation d'autres parties
+			//Ré-initialisation à NULL des deux attributs socLastJoueurX necessaire a la creation d'autres parties
 			socLastJoueur1=null;
 			socLastJoueur2=null; 
 			
 			/*Point de joueur1 et joueur2*/
 			int pointsJ1=0;
 			int pointsJ2=0;
+			String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
+			String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 			
+			//Si un joueur souhaite recevoir les donnees de l'autre
+			sendOpponentData(choiceJ1,sortieJoueur1,socJoueur2);
+			sendOpponentData(choiceJ2,sortieJoueur2,socJoueur1);	
 			
 			while(true) {//UN tour de cette boucle corresponds a UN tour de jeu.
-				//TODO : r�organiser le code du While, certaines fonctions ne semblent pas n�cessaire, d'autres sont � retravailler (ex : spreadTurnResults...)
 				
-				String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
-				String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 				
-				//Si un joueur souhaite recevoir les donnees de l'autre
-				sendOpponentData(choiceJ1,sortieJoueur1,socJoueur2);
-				sendOpponentData(choiceJ2,sortieJoueur2,socJoueur1);	
-					
-				//Si un utilisateur souhaite utiliser le chat (??)
-				choiceJ1 = waitingForChatData(choiceJ1, entreeJoueur1);
-				choiceJ2 = waitingForChatData(choiceJ2, entreeJoueur2);
-				
+				choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
+				choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
+
 				//Si un joueur veut abandonner la partie
 				if(isAbandon(choiceJ1,choiceJ2,sortieJoueur1,sortieJoueur2))
 					break;
@@ -336,7 +324,7 @@ public class RefereePFCLS extends Thread {
 				Socket socket = s.accept();
 				RefereePFCLS smt = new RefereePFCLS(socket);
 				
-				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connect�s au serveur.
+				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectés au serveur.
 				{
 					//Permet d'envoyer le nom de l'aversaire au joueur sans entrer dans le run
 					//FAIT VITE, A OPTIMISER SI POSSIBLE

@@ -10,10 +10,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-public class Player extends Thread {
+public class Player{
 	
 	//Classe joueur qui sert de se connecter a un serveur de jeu en TCP
-	//TODO : L'utilisation d'un Thread est-elle necessaire ?
 	
 	private String domainServer;//Domain auquel on se connecte pour joueur : IP du serveur
 	private int portServer;//Port du serveur
@@ -23,7 +22,6 @@ public class Player extends Thread {
 	PrintWriter sortie;
 	int gameTurn=1;
 	
-	/*TODO: A modifier pour gérer plusieurs adversaires (liste) (OU PAS ?)*/
 	String nameOpponent;//Nom de l'adversaire
 	String ipOpponent="";//IP de l'adversaire
 	int portOpponent;//Port de l'adversaire
@@ -59,7 +57,7 @@ public class Player extends Thread {
 		
 	}
 
-	public void run() {
+	public void startGame() {
 		try {	
 			connectToReferee(this.domainServer, this.portServer);
 			if(soc==null)
@@ -147,6 +145,6 @@ public class Player extends Thread {
 
 	public static void main(String[] args){
 		Player cli = new Player("localhost", 8080);
-		cli.start();
+		cli.startGame();
 	}
 }
