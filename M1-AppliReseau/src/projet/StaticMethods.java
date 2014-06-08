@@ -9,7 +9,7 @@ public final class StaticMethods {
 	
 	public static String receiveString(BufferedReader entree)
 	{
-		//Retourne le String reçu via le BufferedReader entree.
+		//Retourne le String reÔøΩu via le BufferedReader entree.
 		String text=null;
 		try {
 			text = entree.readLine();
@@ -24,6 +24,7 @@ public final class StaticMethods {
 	{
 		//Envoie d'un string via le PrintWriter sortie.
 		sortie.println(text);
+		
 	}
 	
 	public static void consolePrintln(String m)

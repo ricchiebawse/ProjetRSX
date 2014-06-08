@@ -66,7 +66,7 @@ public class Player{
 			}
 			else
 			{
-				StaticMethods.consolePrintln("Connextion effectuée avec " + nameOpponent);
+				StaticMethods.consolePrintln("Connexion effectuée avec " + nameOpponent);
 				StaticMethods.consolePrintln("Bon match !");
 				
 				//On recupère les informations de son adversaires : IP + PORT : Pour discuter avec lui par UDP
@@ -76,6 +76,11 @@ public class Player{
 					portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
 				}
 				
+				//On demande au serveur les regles du jeu
+				StaticMethods.sendString("regle", sortie);
+				String regles = StaticMethods.receiveString(entree);
+				StaticMethods.consolePrintln("Règles du jeu : "+regles);
+				
 				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
 				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
 				
@@ -84,16 +89,27 @@ public class Player{
 						//Deroulement d'un tour de jeu.
 						
 						StaticMethods.consolePrintln("Tour "+ gameTurn);
-						StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
-						String texte = StaticMethods.getKeyboarding();
-						StaticMethods.sendString(texte, sortie);
-						String turnRslt = StaticMethods.receiveString(entree);
+						String grid =StaticMethods.receiveString(entree);
+						//StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
+						StaticMethods.consolePrintln(grid);
+						String texteValid;
+						do{
+							String texte = StaticMethods.getKeyboarding();
+							StaticMethods.sendString(texte, sortie);
+							texteValid = StaticMethods.receiveString(entree);
+							if(texteValid.equals("ko"))
+							{
+								String error = StaticMethods.receiveString(entree);
+								StaticMethods.consolePrintln(error);
+							}
+						}while(texteValid.equals("ko"));
 						
-						StaticMethods.consolePrintln("Mon Choix --> " + texte );
+						String turnRslt = StaticMethods.receiveString(entree);
+						//StaticMethods.consolePrintln("Mon Choix --> " + texte);
 						StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
 
 						gameTurn++;
-
+						
 						if(isGameOver(turnRslt))
 							break;
 								
@@ -112,13 +128,15 @@ public class Player{
 	private boolean isGameOver(String rep){
 		//Verification de la fin de jeu (Game Over).
 		
-		if(rep.equals("defaite")||rep.equals("victoire")||rep.equals("abandon")){
-			if((rep.equals("abandon")))
-				StaticMethods.consolePrintln("Vous avez abandonn� la partie");
+		if(rep.equals("defaite")||rep.equals("victoire")||rep.equals("defaite sur abandon") ||rep.equals("victoire sur abandon") ){
+			if((rep.equals("defaite sur abandon")))
+				StaticMethods.consolePrintln("Vous avez abandonné la partie");
 			else if((rep.equals("defaite")))
 				StaticMethods.consolePrintln("Vous avez perdu la partie");
+			else if((rep.equals("victoire sur abandon")))
+				StaticMethods.consolePrintln("Vous avez gagné la partie sur abandon");
 			else
-				StaticMethods.consolePrintln("Vous avez gagn� la partie");	
+				StaticMethods.consolePrintln("Vous avez gagné la partie");	
 			
 			return true;
 		}

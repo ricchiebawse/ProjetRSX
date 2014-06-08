@@ -24,7 +24,8 @@ public class RefereePFCLS extends Thread {
 	private static String nameJoueur1;  // Nom joueur 1 de la derniere partie commenc�e
 	private static String nameJoueur2; // Nom joueur 2 de la derniere partie commenc�e
 
-
+	private static ArrayList<String> moveAllowed;
+	private static String rules;
 	
 	private boolean isGameOver(int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
@@ -60,21 +61,21 @@ public class RefereePFCLS extends Thread {
 	{
 		//Envoie des r�sultats du match si Abandon.
 				if(str1.equals("abandon")){
-					StaticMethods.sendString("victoire",sortie2);
-					StaticMethods.sendString("abandon",sortie1);
+					StaticMethods.sendString("victoire sur abandon",sortie2);
+					StaticMethods.sendString("defaite sur abandon",sortie1);
 					
 					return true;
 				}
 				if(str2.equals("abandon")){
-					StaticMethods.sendString("victoire",sortie1);
-					StaticMethods.sendString("abandon",sortie2);
+					StaticMethods.sendString("victoire sur abandon",sortie1);
+					StaticMethods.sendString("defaite sur abandon",sortie2);
 					
 					return true;
 				}
 				return false;
 	}
 	
-	private void spreadTurnResults(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
+	private void spreadTurnResults(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2, String choiceJ1, String choiceJ2)
 	{
 		//Envoie aux joueurs des resultats du tour terminé.
 		//TODO : A retravailler
@@ -82,23 +83,23 @@ public class RefereePFCLS extends Thread {
 		if(result==3)
 		{
 			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de réitérer sa commande ?
-			StaticMethods.sendString("probleme"+"/ points joueur :"+p1,sortie1);
-			StaticMethods.sendString("probleme"+"/ points joueur :"+p2,sortie2);
+			StaticMethods.sendString("Probleme "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
+			StaticMethods.sendString("Probleme "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
 		}
 		if(result==2)
 		{
-			StaticMethods.sendString("perdu "+"/ points joueur :"+p1,sortie1);
-			StaticMethods.sendString("gagne"+"/ points joueur :"+p2,sortie2);
+			StaticMethods.sendString("Perdu "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
+			StaticMethods.sendString("Gagne "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
 		}
 		if(result==1)
 		{
-			StaticMethods.sendString("gagne"+"/ points joueur :"+p1,sortie1);
-			StaticMethods.sendString("perdu"+"/ points joueur :"+p2,sortie2);
+			StaticMethods.sendString("Gagne "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
+			StaticMethods.sendString("Perdu "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
 		}
 		if(result==0)
 		{
-			StaticMethods.sendString("nul"+"/ points joueur :"+p1,sortie1);
-			StaticMethods.sendString("nul"+"/ points joueur :"+p2,sortie2);
+			StaticMethods.sendString("Nul "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
+			StaticMethods.sendString("Nul "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
 		}
 	}
 	
@@ -122,16 +123,29 @@ public class RefereePFCLS extends Thread {
 			String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 			String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 			
-			//Si un joueur souhaite recevoir les donnees de l'autre
+			//Envoie les donnees de l'autre
 			sendOpponentData(choiceJ1,sortieJoueur1,socJoueur2);
 			sendOpponentData(choiceJ2,sortieJoueur2,socJoueur1);	
 			
+			//Envoie les regles du jeu 
+			choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
+			choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
+			StaticMethods.sendString(rules,sortieJoueur1);
+			StaticMethods.sendString(rules,sortieJoueur2);
+			
+			
 			while(true) {//UN tour de cette boucle corresponds a UN tour de jeu.
 				
+				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseau | lezard | spoke |",sortieJoueur1);
+				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseau | lezard | spoke |",sortieJoueur2);
 				
 				choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 				choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
-
+				
+				//Test si un joueur à effectuer un move illégal
+				choiceJ1 = illegalMove(choiceJ1, entreeJoueur1, sortieJoueur1);
+				choiceJ2 = illegalMove(choiceJ2, entreeJoueur2, sortieJoueur2);
+				
 				//Si un joueur veut abandonner la partie
 				if(isAbandon(choiceJ1,choiceJ2,sortieJoueur1,sortieJoueur2))
 					break;
@@ -150,7 +164,7 @@ public class RefereePFCLS extends Thread {
 					break;
 				
 				//Diffusion des resultats du tour aux deux joueurs.
-				spreadTurnResults(result,pointsJ1,pointsJ2,sortieJoueur1,sortieJoueur2); 
+				spreadTurnResults(result,pointsJ1,pointsJ2,sortieJoueur1,sortieJoueur2,choiceJ1,choiceJ2); 
 			}
 
 			entreeJoueur1.close();
@@ -162,6 +176,20 @@ public class RefereePFCLS extends Thread {
 		}
 	}	
 	
+	private String illegalMove(String choice, BufferedReader entreeJoueur,
+			PrintWriter sortieJoueur) {
+		//Vérifie que le move du joueur est légal, tant que move illégal, on redemande au joueur de resaisir un move
+		
+		while(!(moveAllowed.contains(choice)))
+		{
+			StaticMethods.sendString("ko",sortieJoueur);
+			StaticMethods.sendString("Coup illégal, veuillez rejouer :",sortieJoueur);
+			choice = StaticMethods.receiveString(entreeJoueur);
+		}
+		StaticMethods.sendString("ok",sortieJoueur);
+		return choice;
+	}
+
 	public RefereePFCLS(Socket socket) {
 		//Concoit la connection avec UN joueur.
 		
@@ -314,10 +342,33 @@ public class RefereePFCLS extends Thread {
 	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entr� (G�rer une nouvelle demande � l'utilisateur?)
 	}
 	
+	private static void possibleMove()
+	{
+		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseau */
+		//Utilisée pour tester si un utilisateur a rentré un move illégal
+		
+		moveAllowed = new ArrayList<String>();
+		moveAllowed.add("pierre");
+		moveAllowed.add("feuille");
+		moveAllowed.add("ciseau");
+		moveAllowed.add("lezard");
+		moveAllowed.add("spoke");
+		moveAllowed.add("abandon");
+	}
+	
+	private static void GameRules()
+	{
+		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseau */
+		//Utilisée pour tester si un utilisateur a rentré un move illégal
+		
+		rules = "Jeu de pierre feuille ciseau lezard spoke : entrer un des coups possibles lorsque le jeu le demande -> (pierre,feuille,ciseau,lezard,spoke), entrer abandon si vous voulez abandonner";
+	}
 	
 	public static void main(String[] args) {
 		int i = 0;
 		StaticMethods.consolePrintln("Serveur multijoueurs de jeu de pierre feuille ciseau lezard spoke");
+		possibleMove();
+		GameRules();
 		try {		
 			ServerSocket s = new ServerSocket(8080);
 			while(i < 10) {// Pas plus de 10 connexions simultanees -> donc 5 parties de pierre feuille ciseau
