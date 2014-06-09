@@ -76,14 +76,34 @@ public class Player{
 					portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
 				}
 				
-				//On demande au serveur les regles du jeu
-				StaticMethods.sendString("regle", sortie);
-				String regles = StaticMethods.receiveString(entree);
-				StaticMethods.consolePrintln("Règles du jeu : "+regles);
+				StaticMethods.consolePrintln("Afficher les règles du jeu ? oui (par défaut) ou non");
+				String reponse = StaticMethods.getKeyboarding();
+				if(reponse.equals("non"))
+				{
+					//On envoie au serveur que le joueur ne souhaite pas récuperer les règles du jeu
+					StaticMethods.sendString("0", sortie);
+				}
+				else
+				{
+					StaticMethods.sendString("1", sortie);
+					
+					//On demande au serveur les regles du jeu
+					String rules="Règles du jeu :";
+					StaticMethods.consolePrintln(rules);
+					
+					//Le serveur nous envoies plusieurs string (séparé par des sauts de ligne) avec les regles du jeu, on affiche tant que le message n'est pas terminé
+					while(!(rules.equals("0")))
+					{
+						rules = StaticMethods.receiveString(entree);
+						if(!(rules.equals("0")))
+							StaticMethods.consolePrintln(rules);
+					}
+				}
 				
 				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
 				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
 				
+				//turnGame();
 				while(true) {//UN parcours de cette boucle corresponds à UN tour de Jeu.
 											
 						//Deroulement d'un tour de jeu.
@@ -105,7 +125,6 @@ public class Player{
 						}while(texteValid.equals("ko"));
 						
 						String turnRslt = StaticMethods.receiveString(entree);
-						//StaticMethods.consolePrintln("Mon Choix --> " + texte);
 						StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
 
 						gameTurn++;
@@ -125,6 +144,41 @@ public class Player{
 		}
 	}
 	
+	/*private void turnGame()
+	{
+		while(true) {//UN parcours de cette boucle corresponds à UN tour de Jeu.
+			
+			//Deroulement d'un tour de jeu.
+			
+			StaticMethods.consolePrintln("Tour "+ gameTurn);
+			String grid =StaticMethods.receiveString(entree);
+			//StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
+			StaticMethods.consolePrintln(grid);
+			String texteValid;
+			do{
+				String texte = StaticMethods.getKeyboarding();
+				StaticMethods.sendString(texte, sortie);
+				texteValid = StaticMethods.receiveString(entree);
+				if(texteValid.equals("ko"))
+				{
+					String error = StaticMethods.receiveString(entree);
+					StaticMethods.consolePrintln(error);
+				}
+			}while(texteValid.equals("ko"));
+			
+			String turnRslt = StaticMethods.receiveString(entree);
+			//StaticMethods.consolePrintln("Mon Choix --> " + texte);
+			StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
+
+			gameTurn++;
+			
+			if(isGameOver(turnRslt))
+				break;
+					
+		}
+	}
+	*/
+	
 	private boolean isGameOver(String rep){
 		//Verification de la fin de jeu (Game Over).
 		
@@ -137,12 +191,40 @@ public class Player{
 				StaticMethods.consolePrintln("Vous avez gagné la partie sur abandon");
 			else
 				StaticMethods.consolePrintln("Vous avez gagné la partie");	
-			
+			//newGame();
 			return true;
 		}
 		return false;
 	}
 	
+/*	private void newGame(){
+		//Demande au joueur si il souhaite un new game, puis envoie au serveur, si deux joueurs ok, le serveur renvoie ok.
+		 * 
+		StaticMethods.consolePrintln("Voulez vous rejouer face au même adversaire? oui ou non (par défaut)");
+		String texte = StaticMethods.getKeyboarding();
+		if(texte.equals("oui"))
+		{
+			StaticMethods.sendString("1", sortie);
+		}
+		else
+		{
+			StaticMethods.sendString("0", sortie);
+		}
+		
+		String reponseServer = StaticMethods.receiveString(entree);
+		
+		if(reponseServer.equals("ok"))
+		{
+			gameTurn=1;
+			turnGame();
+		}
+		else
+		{
+			//Kill Thread
+		}
+		
+	}
+	*/
 	public Player() {
 		StaticMethods.consolePrintln("Quelle est votre nom?");
 		String name = StaticMethods.getKeyboarding();

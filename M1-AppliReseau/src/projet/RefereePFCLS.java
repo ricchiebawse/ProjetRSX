@@ -127,11 +127,30 @@ public class RefereePFCLS extends Thread {
 			sendOpponentData(choiceJ1,sortieJoueur1,socJoueur2);
 			sendOpponentData(choiceJ2,sortieJoueur2,socJoueur1);	
 			
-			//Envoie les regles du jeu 
+			//Reponse à la demande des joueurs d'afficher les régles
 			choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 			choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
-			StaticMethods.sendString(rules,sortieJoueur1);
-			StaticMethods.sendString(rules,sortieJoueur2);
+			
+			//Envoie les regles du jeu aux joueurs qui le veulent
+			
+			//choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
+			//choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
+			
+			//Envoie à J1 s'il le désire
+			if(choiceJ1.equals("1"))
+			{
+				StaticMethods.sendString(rules,sortieJoueur1);
+				//Envoie de l'indicateur de fin de fin de message
+				StaticMethods.sendString("0",sortieJoueur1);
+			}
+			
+			//Envoie à J2 s'il le désire
+			if(choiceJ2.equals("1"))
+			{
+				StaticMethods.sendString(rules,sortieJoueur2);
+				//Envoie de l'indicateur de fin de fin de message
+				StaticMethods.sendString("0",sortieJoueur2);
+			}
 			
 			
 			while(true) {//UN tour de cette boucle corresponds a UN tour de jeu.
@@ -141,6 +160,10 @@ public class RefereePFCLS extends Thread {
 				
 				choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 				choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
+				
+				//Gestion de la cast
+				choiceJ1 = choiceJ1.toLowerCase();
+				choiceJ2 = choiceJ2.toLowerCase();
 				
 				//Test si un joueur à effectuer un move illégal
 				choiceJ1 = illegalMove(choiceJ1, entreeJoueur1, sortieJoueur1);
@@ -361,7 +384,17 @@ public class RefereePFCLS extends Thread {
 		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseau */
 		//Utilisée pour tester si un utilisateur a rentré un move illégal
 		
-		rules = "Jeu de pierre feuille ciseau lezard spoke : entrer un des coups possibles lorsque le jeu le demande -> (pierre,feuille,ciseau,lezard,spoke), entrer abandon si vous voulez abandonner";
+		rules = "Jeu de pierre feuille ciseau lezard spoke :\n";
+		rules += "Coups possibles lorsque le jeu le demande -> (pierre,feuille,ciseau,lezard,spoke)\n";
+		rules += "- pierre gagne contre (lezard,ciseau) et perd contre (feuille,spoke)\n";
+		rules += "- feuille gagne contre (pierre,spoke) et perd contre (ciseau,lezard)\n";
+		rules += "- ciseau gagne contre (feuille,lezard) et perd contre (pierre,spoke)\n";
+		rules += "- lezard gagne contre (papier,spoke) et perd contre (pierre,ciseau)\n";
+		rules += "- spoke gagne contre (pierre,ciseau) et perd contre (lezard,papier)\n";
+		rules += "Seul les victoires rapportent des points (1 point par tour gagné)\n";
+		rules += "Le premier joueur arrivé à "+scoreToWin+" remporte la partie\n";
+		rules += "Le jeu vous permet également de discuter avec votre adversaire pendant l'intégralité de la partie par le biais de la fenetre prévue à cet effet\n";
+		rules += "Si vous voulez abandonner une partie en cours, entrer abandon lorsque c'est à votre tour de jouer\n";
 	}
 	
 	public static void main(String[] args) {
