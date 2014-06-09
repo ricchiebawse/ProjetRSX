@@ -25,7 +25,7 @@ public class Player{
 	String nameOpponent;//Nom de l'adversaire
 	String ipOpponent="";//IP de l'adversaire
 	int portOpponent;//Port de l'adversaire
-	
+
 	
 	private void connectToReferee(String domain, int port)
 	{
@@ -103,53 +103,41 @@ public class Player{
 				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
 				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
 				
-				//turnGame();
-				while(true) {//UN parcours de cette boucle corresponds à UN tour de Jeu.
-											
-						//Deroulement d'un tour de jeu.
-						
-						StaticMethods.consolePrintln("Tour "+ gameTurn);
-						String grid =StaticMethods.receiveString(entree);
-						//StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
-						StaticMethods.consolePrintln(grid);
-						String texteValid;
-						do{
-							String texte = StaticMethods.getKeyboarding();
-							StaticMethods.sendString(texte, sortie);
-							texteValid = StaticMethods.receiveString(entree);
-							if(texteValid.equals("ko"))
-							{
-								String error = StaticMethods.receiveString(entree);
-								StaticMethods.consolePrintln(error);
-							}
-						}while(texteValid.equals("ko"));
-						
-						String turnRslt = StaticMethods.receiveString(entree);
-						StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
-
-						gameTurn++;
-						
-						if(isGameOver(turnRslt))
-							break;
-								
-				}
+				//Fonction jeu
+				turnGame();
 				
-			entree.close();
-			sortie.close();
-			soc.close();
+				//Ferme la fenetre de chat
+				chat.endChat();
+				
+				//Fermeture des sockets instanciées
+				entree.close();
+				sortie.close();
+				soc.close();
+				
 			}
+			
 
 		} catch (IOException e) {
 			e.getMessage();
 		}
+		
 	}
 	
-	/*private void turnGame()
+	private void turnGame()
 	{
-		while(true) {//UN parcours de cette boucle corresponds à UN tour de Jeu.
+		do
+		{//UN parcours de cette boucle corresponds à UN tour de Jeu.
 			
 			//Deroulement d'un tour de jeu.
 			
+			//Permet de gérer le while (sinon parfois pas le temps de finir le isGameOver avant d'entamer une nouvelle boucle) A TESTER !
+			try {
+				Thread.currentThread();
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			StaticMethods.consolePrintln("Tour "+ gameTurn);
 			String grid =StaticMethods.receiveString(entree);
 			//StaticMethods.consolePrintln("Veuillez entrer soit :\npierre\nfeuille\nciseau\nlezard\nspoke");
@@ -171,35 +159,32 @@ public class Player{
 			StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
 
 			gameTurn++;
-			
-			if(isGameOver(turnRslt))
-				break;
 					
-		}
+		}while(!isGameOver());
 	}
-	*/
 	
-	private boolean isGameOver(String rep){
+	
+	private boolean isGameOver(){
 		//Verification de la fin de jeu (Game Over).
+		String endRslt = StaticMethods.receiveString(entree);
 		
-		if(rep.equals("defaite")||rep.equals("victoire")||rep.equals("defaite sur abandon") ||rep.equals("victoire sur abandon") ){
-			if((rep.equals("defaite sur abandon")))
+		if(endRslt.equals("defaite")||endRslt.equals("victoire")||endRslt.equals("defaite sur abandon") ||endRslt.equals("victoire sur abandon") ){
+			if((endRslt.equals("defaite sur abandon")))
 				StaticMethods.consolePrintln("Vous avez abandonné la partie");
-			else if((rep.equals("defaite")))
+			else if((endRslt.equals("defaite")))
 				StaticMethods.consolePrintln("Vous avez perdu la partie");
-			else if((rep.equals("victoire sur abandon")))
+			else if((endRslt.equals("victoire sur abandon")))
 				StaticMethods.consolePrintln("Vous avez gagné la partie sur abandon");
 			else
 				StaticMethods.consolePrintln("Vous avez gagné la partie");	
-			//newGame();
-			return true;
+			return newGame();
 		}
 		return false;
 	}
 	
-/*	private void newGame(){
+	private boolean newGame(){
 		//Demande au joueur si il souhaite un new game, puis envoie au serveur, si deux joueurs ok, le serveur renvoie ok.
-		 * 
+		
 		StaticMethods.consolePrintln("Voulez vous rejouer face au même adversaire? oui ou non (par défaut)");
 		String texte = StaticMethods.getKeyboarding();
 		if(texte.equals("oui"))
@@ -213,18 +198,35 @@ public class Player{
 		
 		String reponseServer = StaticMethods.receiveString(entree);
 		
-		if(reponseServer.equals("ok"))
+		if(reponseServer.equals("1"))
 		{
 			gameTurn=1;
+			String manche = StaticMethods.receiveString(entree);
+			StaticMethods.consolePrintln("Partie n°: "+manche);
 			turnGame();
+			return false;
 		}
 		else
 		{
-			//Kill Thread
+			/* Affichage fin de partie*/
+			StaticMethods.consolePrintln("Fin du jeu !");
+			if(reponseServer.equals("2"))
+			{
+				StaticMethods.consolePrintln("Vous n'avez pas souhaité rejouer de partie");
+			}
+			else if(reponseServer.equals("0"))
+			{
+				StaticMethods.consolePrintln("L'adversaire n'a pas souhaité rejouer la partie");
+			}
+			else
+			{
+				StaticMethods.consolePrintln("Aucun d'entre vous n'a souhaité rejouer la partie");
+			}
+			return true;
 		}
 		
 	}
-	*/
+	
 	public Player() {
 		StaticMethods.consolePrintln("Quelle est votre nom?");
 		String name = StaticMethods.getKeyboarding();

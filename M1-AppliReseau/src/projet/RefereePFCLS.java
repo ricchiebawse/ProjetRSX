@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class RefereePFCLS extends Thread {
 	
-	public static final int scoreToWin=3;
+	public static final int scoreToWin=1;
 
 	//Classe servant de serveur de jeu de pierre feuille ciseau lezard spoke, message en TCP
 	
@@ -43,7 +43,12 @@ public class RefereePFCLS extends Thread {
 			
 			return true;
 		}
-		return false;
+		else
+		{
+			StaticMethods.sendString("autreTour",sortie1);
+			StaticMethods.sendString("autreTour",sortie2);
+			return false;
+		}
 		
 	}
 	
@@ -83,8 +88,8 @@ public class RefereePFCLS extends Thread {
 		if(result==3)
 		{
 			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de réitérer sa commande ?
-			StaticMethods.sendString("Probleme "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
-			StaticMethods.sendString("Probleme "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
+			StaticMethods.sendString("Abandon "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
+			StaticMethods.sendString("Abandon "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
 		}
 		if(result==2)
 		{
@@ -120,6 +125,10 @@ public class RefereePFCLS extends Thread {
 			/*Point de joueur1 et joueur2*/
 			int pointsJ1=0;
 			int pointsJ2=0;
+			
+			/*Nombre de partie disputées entre ces deux joueurs*/
+			int partie=1;
+			
 			String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 			String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 			
@@ -170,8 +179,9 @@ public class RefereePFCLS extends Thread {
 				choiceJ2 = illegalMove(choiceJ2, entreeJoueur2, sortieJoueur2);
 				
 				//Si un joueur veut abandonner la partie
-				if(isAbandon(choiceJ1,choiceJ2,sortieJoueur1,sortieJoueur2))
+				/*if(isAbandon(choiceJ1,choiceJ2,sortieJoueur1,sortieJoueur2))
 					break;
+				*/
 				
 				//Calcul du resultat du tour
 				int result = makeGameTurn(choiceJ1,choiceJ2); 
@@ -181,13 +191,42 @@ public class RefereePFCLS extends Thread {
 					pointsJ2++;
 				else if(result==1)
 					pointsJ1++;
-				
-				//Verification de fin de jeu (Game Over)
-				if(isGameOver(pointsJ1,pointsJ2,sortieJoueur1,sortieJoueur2))
-					break;
-				
 				//Diffusion des resultats du tour aux deux joueurs.
 				spreadTurnResults(result,pointsJ1,pointsJ2,sortieJoueur1,sortieJoueur2,choiceJ1,choiceJ2); 
+				
+				
+				//Verification de fin de jeu (Game Over) ou (Abandon) et demande de newgame
+				if(isAbandon(choiceJ1,choiceJ2,sortieJoueur1,sortieJoueur2))
+				{
+					if(newGame(sortieJoueur1,sortieJoueur2,entreeJoueur1,entreeJoueur2))
+					{
+						pointsJ1=0;
+						pointsJ2=0;
+						partie++;
+						StaticMethods.sendString(String.valueOf(partie),sortieJoueur1);
+						StaticMethods.sendString(String.valueOf(partie),sortieJoueur2);
+					}
+					else
+					{
+						break;
+					}
+				}
+				else if(isGameOver(pointsJ1,pointsJ2,sortieJoueur1,sortieJoueur2))
+				{
+					if(newGame(sortieJoueur1,sortieJoueur2,entreeJoueur1,entreeJoueur2))
+					{
+						pointsJ1=0;
+						pointsJ2=0;
+						partie++;
+						StaticMethods.sendString(String.valueOf(partie),sortieJoueur1);
+						StaticMethods.sendString(String.valueOf(partie),sortieJoueur2);
+					}
+					else
+					{
+						break;
+					}
+				}
+				
 			}
 
 			entreeJoueur1.close();
@@ -203,7 +242,7 @@ public class RefereePFCLS extends Thread {
 			PrintWriter sortieJoueur) {
 		//Vérifie que le move du joueur est légal, tant que move illégal, on redemande au joueur de resaisir un move
 		
-		while(!(moveAllowed.contains(choice)))
+		while(!(moveAllowed.contains(choice.toLowerCase())))
 		{
 			StaticMethods.sendString("ko",sortieJoueur);
 			StaticMethods.sendString("Coup illégal, veuillez rejouer :",sortieJoueur);
@@ -213,6 +252,44 @@ public class RefereePFCLS extends Thread {
 		return choice;
 	}
 
+	private boolean newGame(PrintWriter sortieJoueur1, PrintWriter sortieJoueur2, BufferedReader entreeJoueur1, BufferedReader entreeJoueur2){
+		//Demande au joueurs s'ils souhaitent rejouer la partie achevée
+		
+		String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
+		String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
+		
+		if((choiceJ1.equals("1")) && (choiceJ2.equals("1")))
+		{
+			//Cas ou les deux joueurs veulent rejouer
+			StaticMethods.sendString("1",sortieJoueur1);
+			StaticMethods.sendString("1",sortieJoueur2);
+			return true;		
+		}
+		else
+		{
+			if((choiceJ1.equals("0")) && (choiceJ2.equals("0")))
+			{
+				//Cas ou les deux refusent de rejouer
+				
+				StaticMethods.sendString("3",sortieJoueur1);
+				StaticMethods.sendString("3",sortieJoueur2);
+				return false;
+			}
+			else if((choiceJ1.equals("1")))
+			{
+				StaticMethods.sendString("0",sortieJoueur1);
+				StaticMethods.sendString("2",sortieJoueur2);
+				return false;
+			}
+			else
+			{
+				StaticMethods.sendString("2",sortieJoueur1);
+				StaticMethods.sendString("0",sortieJoueur2);
+				return false;
+			}
+		}
+		
+	}
 	public RefereePFCLS(Socket socket) {
 		//Concoit la connection avec UN joueur.
 		
@@ -362,7 +439,7 @@ public class RefereePFCLS extends Thread {
 			return 0;
 		}
 	}
-	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entr� (G�rer une nouvelle demande � l'utilisateur?)
+	return 3;// Signifie qu'il y a une erreur dans ce que un des joueurs a entre (cas abandon)
 	}
 	
 	private static void possibleMove()

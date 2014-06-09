@@ -82,6 +82,10 @@ public class ChatUDP extends Thread {
 		this.start();
 	}
 	
+	public void endChat(){
+		frame.dispose();
+		Thread.currentThread().interrupt();
+	}
 	public String getNameOpponent() {
 		return nameOpponent;
 	}
