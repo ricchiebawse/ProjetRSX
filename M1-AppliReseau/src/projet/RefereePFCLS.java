@@ -12,9 +12,10 @@ import java.util.ArrayList;
 
 public class RefereePFCLS extends Thread {
 	
-	public static final int scoreToWin=1;
+	public static final int SCORE_TO_WIN=1;
+	public static final int MAX_SIMULTANEOUS_GAME=5;
 
-	//Classe servant de serveur de jeu de pierre feuille ciseau lezard spoke, message en TCP
+	//Classe : Arbitre de jeu Pierre-Feuille-ciseauxx-Lezard-Spoke
 	
 	private ServerSocket s;
 	//Sockets de service avec les deux DERNIERS joueurs connect�s.
@@ -30,16 +31,16 @@ public class RefereePFCLS extends Thread {
 	private boolean isGameOver(int p1, int p2, PrintWriter sortie1, PrintWriter sortie2)
 	{
 		//Verification de fin de jeu (Game Over) et diffusion des resultats aux joueurs.
-		if(p2>=scoreToWin)
+		if(p2>=SCORE_TO_WIN)
 		{
-			StaticMethods.sendString("victoire",sortie2);
-			StaticMethods.sendString("defaite",sortie1);
+			StaticMethods.sendString(Consts.WIN,sortie2);
+			StaticMethods.sendString(Consts.DEFEAT,sortie1);
 			
 			return true;
 		}
-		if(p1>=scoreToWin){
-			StaticMethods.sendString("victoire",sortie1);
-			StaticMethods.sendString("defaite",sortie2);
+		if(p1>=SCORE_TO_WIN){
+			StaticMethods.sendString(Consts.WIN,sortie1);
+			StaticMethods.sendString(Consts.DEFEAT,sortie2);
 			
 			return true;
 		}
@@ -55,7 +56,7 @@ public class RefereePFCLS extends Thread {
 	private void sendOpponentData(String str, PrintWriter sortie, Socket soc)
 	{
 		//Envoie de l'IP et du port d'un joueur à l'autre joueur.
-		if(str.equals("info"))
+		if(str.equals(Consts.MSG_DATA))
 		{
 			sortie.println(soc.getInetAddress().toString());
 			sortie.println(soc.getPort());
@@ -64,16 +65,16 @@ public class RefereePFCLS extends Thread {
 
 	private boolean isAbandon(String str1, String str2, PrintWriter sortie1, PrintWriter sortie2)
 	{
-		//Envoie des r�sultats du match si Abandon.
-				if(str1.equals("abandon")){
-					StaticMethods.sendString("victoire sur abandon",sortie2);
-					StaticMethods.sendString("defaite sur abandon",sortie1);
+		//Envoie des résultats du match si Abandon.
+				if(str1.equals(Consts.SURRENDER)){
+					StaticMethods.sendString(Consts.WIN_BY_SURRENDER,sortie2);
+					StaticMethods.sendString(Consts.DEFEAT_BY_SURRENDER,sortie1);
 					
 					return true;
 				}
-				if(str2.equals("abandon")){
-					StaticMethods.sendString("victoire sur abandon",sortie1);
-					StaticMethods.sendString("defaite sur abandon",sortie2);
+				if(str2.equals(Consts.SURRENDER)){
+					StaticMethods.sendString(Consts.WIN_BY_SURRENDER,sortie1);
+					StaticMethods.sendString(Consts.DEFEAT_BY_SURRENDER,sortie2);
 					
 					return true;
 				}
@@ -82,30 +83,39 @@ public class RefereePFCLS extends Thread {
 	
 	private void spreadTurnResults(int result,int p1, int p2, PrintWriter sortie1, PrintWriter sortie2, String choiceJ1, String choiceJ2)
 	{
-		//Envoie aux joueurs des resultats du tour terminé.
-		//TODO : A retravailler
+		//Envoie aux joueurs les resultats du tour terminé.
+		String msgJ1="";
+		String msgJ2="";
 		
 		if(result==3)
 		{
-			//FAIT VITE, A OPTIMISER SI POSSIBLE -> Demande au joueur qui a nimm de réitérer sa commande ?
-			StaticMethods.sendString("Abandon "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
-			StaticMethods.sendString("Abandon "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
+			msgJ1+="Abandon ";
+			msgJ1+="Abandon ";
 		}
 		if(result==2)
 		{
-			StaticMethods.sendString("Perdu "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
-			StaticMethods.sendString("Gagne "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
+			msgJ1+="Perdu ";
+			msgJ2+="Gagne ";
 		}
 		if(result==1)
 		{
-			StaticMethods.sendString("Gagne "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
-			StaticMethods.sendString("Perdu "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
+			msgJ1+="Gagne ";
+			msgJ2+="Perdu ";
 		}
 		if(result==0)
 		{
-			StaticMethods.sendString("Nul "+"| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2,sortie1);
-			StaticMethods.sendString("Nul "+"| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1,sortie2);
+			msgJ1+="Nul ";
+			msgJ2+="Nul ";
 		}
+		
+		msgJ1+="| Choix : "+choiceJ1+" - Points : "+p1+" | Choix adversaire : "+choiceJ2+" - Points adversaire : "+p2;
+		msgJ2+="| Choix : "+choiceJ2+" - Points : "+p2+" | Choix adversaire : "+choiceJ1+" - Points adversaire : "+p1;
+		
+		StaticMethods.sendString(msgJ1,sortie1);
+		StaticMethods.sendString(msgJ2,sortie2);
+
+
+		
 	}
 	
 	public void run() {//Thread de gestion d'UNE partie de PFCLS entre DEUX joueurs.
@@ -146,26 +156,26 @@ public class RefereePFCLS extends Thread {
 			//choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 			
 			//Envoie à J1 s'il le désire
-			if(choiceJ1.equals("1"))
+			if(choiceJ1.equals(Consts.MSG_1))
 			{
 				StaticMethods.sendString(rules,sortieJoueur1);
 				//Envoie de l'indicateur de fin de fin de message
-				StaticMethods.sendString("0",sortieJoueur1);
+				StaticMethods.sendString(Consts.MSG_0,sortieJoueur1);
 			}
 			
 			//Envoie à J2 s'il le désire
-			if(choiceJ2.equals("1"))
+			if(choiceJ2.equals(Consts.MSG_1))
 			{
 				StaticMethods.sendString(rules,sortieJoueur2);
 				//Envoie de l'indicateur de fin de fin de message
-				StaticMethods.sendString("0",sortieJoueur2);
+				StaticMethods.sendString(Consts.MSG_0,sortieJoueur2);
 			}
 			
 			
 			while(true) {//UN tour de cette boucle corresponds a UN tour de jeu.
 				
-				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseau | lezard | spoke |",sortieJoueur1);
-				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseau | lezard | spoke |",sortieJoueur2);
+				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseaux | lezard | spoke |",sortieJoueur1);
+				StaticMethods.sendString("Veuillez entrer soit : | pierre | feuille | ciseaux | lezard | spoke |",sortieJoueur2);
 				
 				choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 				choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
@@ -244,11 +254,11 @@ public class RefereePFCLS extends Thread {
 		
 		while(!(moveAllowed.contains(choice.toLowerCase())))
 		{
-			StaticMethods.sendString("ko",sortieJoueur);
+			StaticMethods.sendString(Consts.MSG_KO,sortieJoueur);
 			StaticMethods.sendString("Coup illégal, veuillez rejouer :",sortieJoueur);
 			choice = StaticMethods.receiveString(entreeJoueur);
 		}
-		StaticMethods.sendString("ok",sortieJoueur);
+		StaticMethods.sendString(Consts.MSG_OK,sortieJoueur);
 		return choice;
 	}
 
@@ -258,33 +268,33 @@ public class RefereePFCLS extends Thread {
 		String choiceJ1 = StaticMethods.receiveString(entreeJoueur1);
 		String choiceJ2 = StaticMethods.receiveString(entreeJoueur2);
 		
-		if((choiceJ1.equals("1")) && (choiceJ2.equals("1")))
+		if((choiceJ1.equals(Consts.MSG_1)) && (choiceJ2.equals(Consts.MSG_1)))
 		{
 			//Cas ou les deux joueurs veulent rejouer
-			StaticMethods.sendString("1",sortieJoueur1);
-			StaticMethods.sendString("1",sortieJoueur2);
+			StaticMethods.sendString(Consts.MSG_1,sortieJoueur1);
+			StaticMethods.sendString(Consts.MSG_1,sortieJoueur2);
 			return true;		
 		}
 		else
 		{
-			if((choiceJ1.equals("0")) && (choiceJ2.equals("0")))
+			if((choiceJ1.equals(Consts.MSG_0)) && (choiceJ2.equals(Consts.MSG_0)))
 			{
 				//Cas ou les deux refusent de rejouer
 				
-				StaticMethods.sendString("3",sortieJoueur1);
-				StaticMethods.sendString("3",sortieJoueur2);
+				StaticMethods.sendString(Consts.MSG_3,sortieJoueur1);
+				StaticMethods.sendString(Consts.MSG_3,sortieJoueur2);
 				return false;
 			}
-			else if((choiceJ1.equals("1")))
+			else if((choiceJ1.equals(Consts.MSG_1)))
 			{
-				StaticMethods.sendString("0",sortieJoueur1);
-				StaticMethods.sendString("2",sortieJoueur2);
+				StaticMethods.sendString(Consts.MSG_0,sortieJoueur1);
+				StaticMethods.sendString(Consts.MSG_2,sortieJoueur2);
 				return false;
 			}
 			else
 			{
-				StaticMethods.sendString("2",sortieJoueur1);
-				StaticMethods.sendString("0",sortieJoueur2);
+				StaticMethods.sendString(Consts.MSG_2,sortieJoueur1);
+				StaticMethods.sendString(Consts.MSG_0,sortieJoueur2);
 				return false;
 			}
 		}
@@ -334,7 +344,7 @@ public class RefereePFCLS extends Thread {
 		{
 			return 2;
 		}
-		if(b.equals("ciseau"))
+		if(b.equals("ciseaux"))
 		{
 			return 1;
 		}
@@ -357,7 +367,7 @@ public class RefereePFCLS extends Thread {
 		{
 			return 0;
 		}
-		if(b.equals("ciseau"))
+		if(b.equals("ciseaux"))
 		{
 			return 2;
 		}
@@ -370,7 +380,7 @@ public class RefereePFCLS extends Thread {
 			return 1;
 		}
 	}
-	if(a.equals("ciseau"))
+	if(a.equals("ciseaux"))
 	{
 		if(b.equals("pierre"))
 		{
@@ -380,7 +390,7 @@ public class RefereePFCLS extends Thread {
 		{
 			return 1;
 		}
-		if(b.equals("ciseau"))
+		if(b.equals("ciseaux"))
 		{
 			return 0;
 		}
@@ -403,7 +413,7 @@ public class RefereePFCLS extends Thread {
 		{
 			return 1;
 		}
-		if(b.equals("ciseau"))
+		if(b.equals("ciseaux"))
 		{
 			return 2;
 		}
@@ -426,7 +436,7 @@ public class RefereePFCLS extends Thread {
 		{
 			return 2;
 		}
-		if(b.equals("ciseau"))
+		if(b.equals("ciseaux"))
 		{
 			return 1;
 		}
@@ -444,51 +454,59 @@ public class RefereePFCLS extends Thread {
 	
 	private static void possibleMove()
 	{
-		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseau */
+		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseaux */
 		//Utilisée pour tester si un utilisateur a rentré un move illégal
 		
 		moveAllowed = new ArrayList<String>();
 		moveAllowed.add("pierre");
 		moveAllowed.add("feuille");
-		moveAllowed.add("ciseau");
+		moveAllowed.add("ciseaux");
 		moveAllowed.add("lezard");
 		moveAllowed.add("spoke");
-		moveAllowed.add("abandon");
+		moveAllowed.add(Consts.SURRENDER);
 	}
 	
 	private static void GameRules()
 	{
-		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseau */
+		//Fonction qui sert à mettre a jour la liste de move possible dans le jeu de pierre feuille ciseaux */
 		//Utilisée pour tester si un utilisateur a rentré un move illégal
 		
-		rules = "Jeu de pierre feuille ciseau lezard spoke :\n";
-		rules += "Coups possibles lorsque le jeu le demande -> (pierre,feuille,ciseau,lezard,spoke)\n";
-		rules += "- pierre gagne contre (lezard,ciseau) et perd contre (feuille,spoke)\n";
-		rules += "- feuille gagne contre (pierre,spoke) et perd contre (ciseau,lezard)\n";
-		rules += "- ciseau gagne contre (feuille,lezard) et perd contre (pierre,spoke)\n";
-		rules += "- lezard gagne contre (papier,spoke) et perd contre (pierre,ciseau)\n";
-		rules += "- spoke gagne contre (pierre,ciseau) et perd contre (lezard,papier)\n";
+		rules = "Jeu de pierre feuille ciseaux lezard spoke :\n";
+		rules += "Coups possibles lorsque le jeu le demande -> (pierre,feuille,ciseaux,lezard,spoke)\n";
+		rules += "- pierre gagne contre (lezard,ciseaux) et perd contre (feuille,spoke)\n";
+		rules += "- feuille gagne contre (pierre,spoke) et perd contre (ciseaux,lezard)\n";
+		rules += "- ciseaux gagne contre (feuille,lezard) et perd contre (pierre,spoke)\n";
+		rules += "- lezard gagne contre (papier,spoke) et perd contre (pierre,ciseaux)\n";
+		rules += "- spoke gagne contre (pierre,ciseaux) et perd contre (lezard,papier)\n";
 		rules += "Seul les victoires rapportent des points (1 point par tour gagné)\n";
-		rules += "Le premier joueur arrivé à "+scoreToWin+" remporte la partie\n";
+		rules += "Le premier joueur arrivé à "+SCORE_TO_WIN+" remporte la partie\n";
 		rules += "Le jeu vous permet également de discuter avec votre adversaire pendant l'intégralité de la partie par le biais de la fenetre prévue à cet effet\n";
 		rules += "Si vous voulez abandonner une partie en cours, entrer abandon lorsque c'est à votre tour de jouer\n";
 	}
 	
 	public static void main(String[] args) {
 		int i = 0;
-		StaticMethods.consolePrintln("Serveur multijoueurs de jeu de pierre feuille ciseau lezard spoke");
+		int myPort = Consts.DEFAULT_PORT;
+		int maxSimultaneousGame = MAX_SIMULTANEOUS_GAME;
+		
+		if(args.length>0){
+			if(args[0]!=null){ myPort=Integer.parseInt(args[0]); }
+			if(args[1]!=null){ maxSimultaneousGame=Integer.parseInt(args[1]); }
+		}
+
+		
+		StaticMethods.consolePrintln("Serveur multijoueurs de jeu de pierre feuille ciseaux lezard spoke");
 		possibleMove();
 		GameRules();
 		try {		
-			ServerSocket s = new ServerSocket(8080);
-			while(i < 10) {// Pas plus de 10 connexions simultanees -> donc 5 parties de pierre feuille ciseau
+			ServerSocket s = new ServerSocket(myPort);
+			while(i < maxSimultaneousGame*2) {// Par défaut : Pas plus de 10 connexions simultanees -> donc 5 parties
 				Socket socket = s.accept();
 				RefereePFCLS smt = new RefereePFCLS(socket);
 				
 				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectés au serveur.
 				{
 					//Permet d'envoyer le nom de l'aversaire au joueur sans entrer dans le run
-					//FAIT VITE, A OPTIMISER SI POSSIBLE
 					PrintWriter sortietmp1 = new PrintWriter (socLastJoueur1.getOutputStream(), true);
 					PrintWriter sortietmp2 = new PrintWriter (socLastJoueur2.getOutputStream(), true);
 					sortietmp1.println(nameJoueur2);

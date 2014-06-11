@@ -1,0 +1,172 @@
+
+
+
+
+
+
+Network Working Group                                        R. Philippe
+Request For Comments: 7321                                        N. Eze
+                                			Paris -	Dauphine
+								May 2014
+
+
+                    	       THE RGP PROTOCOL
+
+Status of this Memo
+
+   This memo provides information for the Internet community. This memo
+ does not specify an Internet standard of any kind. Distribution of
+ this memo is unlimited.
+
+Summary
+
+   RGP is a very simple protocol used to make several people play a                              
+   game with a referee’s help. It is from this that its name comes,
+   Referee Game Protocol or RGP.
+   
+
+
+
+
+Table of Contents
+
+   1.   Purpose  . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+   2.   Overview of the Protocol . . . . . . . . . . . . . . . . . . 2
+   3.   Relation to other Protocols. . . . . . . . . . . . . . . . . 2
+   4.   Client - Server Connection . . . . . . . . . . . . . . . . . 2
+   5.   Client - Client Connection . . . . . . . . . . . . . . . . . 2
+   6.   Playing the game . . . . . . . . . . . . . . . . . . . . . . 3
+   7.   Game over  . . . . . . . . . . . . . . . . . . . . . . . . . 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PHILIPPE, EZE                                                   [Page 1]
+
+RFC 7321                         RGP                            May 2014
+
+
+1. Purpose
+
+   RGP is a simple protocol to organize game between several players
+   and allow them to chat with another player, therefore was named
+   the Referee Game Protocol or RGP.
+
+   It uses the Transmission Control Protocol (TCP). RGP should provide
+   the users to play different games together such as 
+   Rock-paper-scissors-lizard-Spock, Puissance 4 or 2048.
+   RGP manage the communication between clients (players) and server
+   (referee). He can obviously manage several players at the same time,
+   but also several simultaneous games.
+
+2. Overview of the Protocol
+
+
+   Any game begins with enough request (depends on the requisite amount
+   of player for a specific game) of connection to the server.
+   When the game begin, players take turns to make their moves, one 
+   player at a time. When all the conditions have been met, the referee
+   declare a winner or a draw, and the game ends.
+
+3. Relation to other Protocols
+
+   As mentioned RGP uses the Transmission Connection Protocol (TCP) to
+   manage the game, and the User Datagram Protocol (UDP) in order to
+   allow players to chat with another one.
+
+
+4. Client - Server Connection
+
+   A client (player) connect to the server via TCP by entering the 
+   server’s address and server’s port. For each connection with a 
+   player, the referee holds the id of the player and his ip. Then, he
+   creates a thread to communicate with this client.
+
+5. Client - Client Connection
+
+   A connected client can chat with an other connected clients due to
+   the referee. At the beginning of each game, a player asks the 
+   referee to send him the ip of the player he faces and his listening
+   port, the referee sends him. Then, the player can send messages 
+   via UDP to this other player who will gets the ip and the listening
+   port of his opponent in order to be able to answer via UDP.
+
+
+
+
+
+
+
+PHILIPPE, EZE                                                   [Page 2]
+
+RFC 7321                         RGP                           May 2014
+
+
+6. Playing the game
+
+   In each turn, the referee sends several messages such as the current
+   game board or the turn number via TCP to the player whose turn it is,
+   and wait for his response (which will be the player’s move). When
+   the referee did it for all the players, he updates the game board 
+   and check if the game is over. If not, the referee throw a new turn.
+
+7. Game over
+
+   According to the game, the referee knows game over’s rules. And he
+   check at each turn whether theses game over’s circumstances are 
+   completed or not. If there are, the referee send to the players
+   game results and ask to all of them if they would like to play
+   again. 
+   If enough players agree, a new game begin.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PHILIPPE, EZE                                                   [Page 3]
+
