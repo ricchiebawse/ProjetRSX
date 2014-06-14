@@ -10,12 +10,11 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
+//TODO ERROR LORS DE FIN DE MATCH -> QUELQUES FOIS Tour null et nullpointerexception (pas encore trouvé pk le code fait ça)
 public class Player{
 	
-	public static final String YES="oui";
-	public static final String NO="non";
-
-
+	public static final String ANSWER_YES="oui";
+	public static final String ANSWER_NO="non";
 
 
 	//Classe joueur qui sert de se connecter a un serveur de jeu en TCP
@@ -27,6 +26,8 @@ public class Player{
 	BufferedReader entree;
 	PrintWriter sortie;
 	int gameTurn=1;
+	int partie;
+	int numPlayer;//Numéro du Player : 1 ou 2
 	
 	String nameOpponent;//Nom de l'adversaire
 	String ipOpponent="";//IP de l'adversaire
@@ -58,7 +59,7 @@ public class Player{
 		sortie.println(myName); // Envoie du nom du joueur a l'arbitre afin qu'il le diffuse a l'autre joueur
 		StaticMethods.consolePrintln("recherche de connexion avec l'autre joueur...");
 		
-		//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connect� � l'arbitre).
+		//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connect? ? l'arbitre).
 		nameOpponent = StaticMethods.receiveString(entree); 
 		
 	}
@@ -68,7 +69,7 @@ public class Player{
 			connectToReferee(this.domainServer, this.portServer);
 			if(soc==null)
 			{
-				StaticMethods.consolePrintln("Connexion a échouée");
+				StaticMethods.consolePrintln(Consts.CONNEXION_ECHOUE);
 			}
 			else
 			{
@@ -84,28 +85,32 @@ public class Player{
 				
 				StaticMethods.consolePrintln("Afficher les règles du jeu ? oui (par défaut) ou non");
 				String reponse = StaticMethods.getKeyboarding();
-				if(reponse.equals(NO))
+				if(reponse.equals(ANSWER_NO))
 				{
 					//On envoie au serveur que le joueur ne souhaite pas récuperer les règles du jeu
-					StaticMethods.sendString(Consts.MSG_0, sortie);
+					StaticMethods.sendString(Consts.MSG_DECLINE, sortie);
 				}
 				else
 				{
-					StaticMethods.sendString(Consts.MSG_1, sortie);
+					StaticMethods.sendString(Consts.MSG_ACK, sortie);
 					
 					//On demande au serveur les regles du jeu
 					String rules="Règles du jeu :";
 					StaticMethods.consolePrintln(rules);
 					
 					//Le serveur nous envoies plusieurs string (séparé par des sauts de ligne) avec les regles du jeu, on affiche tant que le message n'est pas terminé
-					while(!(rules.equals(Consts.MSG_0)))
+					while(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
 					{
 						rules = StaticMethods.receiveString(entree);
-						if(!(rules.equals(Consts.MSG_0)))
+						if(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
 							StaticMethods.consolePrintln(rules);
 					}
 				}
 				
+				partie = Integer.parseInt(StaticMethods.receiveString(entree));
+				numPlayer = Integer.parseInt(StaticMethods.receiveString(entree));
+				StaticMethods.consolePrintln("Partie n°"+partie);
+				StaticMethods.consolePrintln("Vous êtes le joueur "+numPlayer);
 				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
 				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
 				
@@ -131,6 +136,7 @@ public class Player{
 	
 	private void turnGame()
 	{
+		String endRslt;
 		do
 		{//UN parcours de cette boucle corresponds à UN tour de Jeu.
 			
@@ -145,64 +151,100 @@ public class Player{
 				e.printStackTrace();
 			}
 			StaticMethods.consolePrintln("Tour "+ gameTurn);
-			String grid =StaticMethods.receiveString(entree);
-			StaticMethods.consolePrintln(grid);
+			
+			String grid="";
+			String temp="";
+			while(!(temp.equals(Consts.MSG_END_OF_MESSAGE)))
+			{
+				temp = StaticMethods.receiveString(entree);
+				if(!(temp.equals(Consts.MSG_END_OF_MESSAGE)))
+				{
+					StaticMethods.consolePrintln(temp);
+					grid = temp;
+				}
+			}
+			
+			//Pour les jeu qui se joue chacun son tour (comme Puissance4), on vérifie que l'autre joueur n'a pas gagné ou perdu
+			if(isGameOver(grid))
+			{
+				break;
+			}
+			
+			
 			String texteValid;
 			do{
 				String texte = StaticMethods.getKeyboarding();
 				StaticMethods.sendString(texte, sortie);
 				texteValid = StaticMethods.receiveString(entree);
-				if(texteValid.equals(Consts.MSG_KO))
+				if(texteValid.equals(Consts.MSG_INVALID))
 				{
 					String error = StaticMethods.receiveString(entree);
 					StaticMethods.consolePrintln(error);
 				}
-			}while(texteValid.equals(Consts.MSG_KO));
+			}while(texteValid.equals(Consts.MSG_INVALID));
 			
-			String turnRslt = StaticMethods.receiveString(entree);
-			StaticMethods.consolePrintln("\t Résultat --> " + turnRslt);
+			StaticMethods.consolePrintln("Résultat :");
+			String turnRslt="";
+			while(!(turnRslt.equals(Consts.MSG_END_OF_MESSAGE)))
+			{
+				turnRslt = StaticMethods.receiveString(entree);
+				if(!(turnRslt.equals(Consts.MSG_END_OF_MESSAGE)))
+					StaticMethods.consolePrintln(turnRslt);
+			}
 
 			gameTurn++;
-					
-		}while(!isGameOver());
+			
+			endRslt="";
+			temp="";
+			while(!(temp.equals(Consts.MSG_END_OF_MESSAGE)))
+			{
+				temp = StaticMethods.receiveString(entree);
+				if(!(temp.equals(Consts.MSG_END_OF_MESSAGE)))
+					endRslt = temp;
+			}
+			
+		}while((!isGameOver(endRslt)));
 	}
 	
 	
-	private boolean isGameOver(){
+	private boolean isGameOver(String endRslt){
 		//Verification de la fin de jeu (Game Over).
-		String endRslt = StaticMethods.receiveString(entree);
-		
-		if(endRslt.equals(Consts.DEFEAT)||endRslt.equals(Consts.WIN)||endRslt.equals(Consts.DEFEAT_BY_SURRENDER) ||endRslt.equals(Consts.WIN_BY_SURRENDER) ){
+		if(endRslt.equals(Consts.DEFEAT)||endRslt.equals(Consts.WIN)||endRslt.equals(Consts.DEFEAT_BY_SURRENDER) ||endRslt.equals(Consts.WIN_BY_SURRENDER)||endRslt.equals(Consts.MSG_GRID_FULL) ){
 			if((endRslt.equals(Consts.DEFEAT_BY_SURRENDER)))
 				StaticMethods.consolePrintln("Vous avez abandonné la partie");
 			else if((endRslt.equals(Consts.DEFEAT)))
 				StaticMethods.consolePrintln("Vous avez perdu la partie");
 			else if((endRslt.equals(Consts.WIN_BY_SURRENDER)))
 				StaticMethods.consolePrintln("Vous avez gagné la partie sur abandon");
+			else if((endRslt.equals(Consts.WIN)))
+				StaticMethods.consolePrintln("Vous avez gagné la partie");
 			else
-				StaticMethods.consolePrintln("Vous avez gagné la partie");	
+				StaticMethods.consolePrintln("La plateau de jeu est rempli, vous avez fait match nul");
 			return newGame();
 		}
+		
+		//Match pas terminé
 		return false;
 	}
+	
 	
 	private boolean newGame(){
 		//Demande au joueur si il souhaite un new game, puis envoie au serveur, si deux joueurs ok, le serveur renvoie ok.
 		
 		StaticMethods.consolePrintln("Voulez vous rejouer face au même adversaire? oui ou non (par défaut)");
 		String texte = StaticMethods.getKeyboarding();
-		if(texte.equals(YES))
+		if(texte.equals(ANSWER_YES))
 		{
-			StaticMethods.sendString(Consts.MSG_1, sortie);
+			StaticMethods.sendString(Consts.MSG_REMATCH, sortie);
 		}
 		else
 		{
-			StaticMethods.sendString(Consts.MSG_0, sortie);
+			StaticMethods.sendString(Consts.MSG_NO_REMATCH, sortie);
 		}
 		
 		String reponseServer = StaticMethods.receiveString(entree);
 		
-		if(reponseServer.equals(Consts.MSG_1))
+		if(reponseServer.equals(Consts.MSG_REMATCH_ACK))
 		{
 			gameTurn=1;
 			String manche = StaticMethods.receiveString(entree);
@@ -214,11 +256,11 @@ public class Player{
 		{
 			/* Affichage fin de partie*/
 			StaticMethods.consolePrintln("Fin du jeu !");
-			if(reponseServer.equals(Consts.MSG_2))
+			if(reponseServer.equals(Consts.MSG_NO_REMATCH_ACK))
 			{
 				StaticMethods.consolePrintln("Vous n'avez pas souhaité rejouer de partie");
 			}
-			else if(reponseServer.equals(Consts.MSG_0))
+			else if(reponseServer.equals(Consts.MSG_NO_REMATCH_OPPONENT))
 			{
 				StaticMethods.consolePrintln("L'adversaire n'a pas souhaité rejouer la partie");
 			}
@@ -231,6 +273,15 @@ public class Player{
 		
 	}
 	
+	public Player() {
+		StaticMethods.consolePrintln("Quelle est votre nom?");
+		String name = StaticMethods.getKeyboarding();
+		StaticMethods.consolePrintln("Bienvenue "+ name +" !");
+		this.myName=name;
+		this.domainServer="localhost";
+		this.portServer=8080;
+	}
+	
 	public Player(String domain, int port) {
 		StaticMethods.consolePrintln("Quelle est votre nom?");
 		String name = StaticMethods.getKeyboarding();
@@ -241,16 +292,17 @@ public class Player{
 	}
 
 	public static void main(String[] args){
-		//Les arguments d'exécution sont : l'IP du serveur distant, le port du serveur distant.
 		String servIP=Consts.DEFAULT_IP;
 		int servPort=Consts.DEFAULT_PORT;
 		
 		if(args.length>0){
 			if(args[0]!=null){ servIP=args[0]; }
 			if(args[1]!=null){ servPort=Integer.parseInt(args[1]); }
-		}
+			}
+
 
 		Player cli = new Player(servIP, servPort);
 		cli.startGame();
+		StaticMethods.consolePrintln("Console de jeu éteinte");
 	}
 }

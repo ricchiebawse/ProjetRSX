@@ -11,7 +11,7 @@ import java.net.UnknownHostException;
 public class ChatUDP extends Thread {
 	//Permet de dialoguer en UDP
 	
-	private int myPort; //Permet de lier la socket d'�coute
+	private int myPort; //Permet de lier la socket d'?coute
 	private String myName;
 	private String nameOpponent;
 	private IHMChatUDP frame;
