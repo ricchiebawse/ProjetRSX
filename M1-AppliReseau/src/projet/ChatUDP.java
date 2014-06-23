@@ -39,7 +39,11 @@ public class ChatUDP extends Thread {
 					frame.setTextArea(nameOpponent+" : "+txtString);//on insère le string obtenu dans la JTextArea
 					packet.setData(buf,0,buf.length);
 			}
-		} catch (IOException e) {
+		} catch (SocketException e) {
+			StaticMethods.consolePrintln(Consts.CONNEXION_OPP_INTERRUPTED);
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		}catch (IOException e) {
 			e.getMessage();
 		}
 	}

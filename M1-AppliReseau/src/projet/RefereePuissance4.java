@@ -5,8 +5,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 
@@ -366,7 +370,13 @@ public class RefereePuissance4 extends Thread {
 			entreeJoueur2.close();
 			sortieJoueur2.close();
 			sortieJoueur1.close();
-		} catch (IOException e) {
+		} catch (SocketException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_PLA_INTERRUPTED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
+			
+		}catch (IOException e) {
 			e.getMessage();
 		}
 	}	
@@ -712,7 +722,6 @@ public class RefereePuissance4 extends Thread {
 		do{
 			compteur++;
 			testligne++;
-			System.out.println(" test "+grid[testligne][testcolonne]+"   "+joueur);
 			if(compteur==SCORE_TO_WIN)
 			{
 				if(joueur==1)
@@ -830,27 +839,34 @@ public class RefereePuissance4 extends Thread {
 		StaticMethods.consolePrintln("Serveur multijoueurs de jeu de puissance 4");
 		GameRules();
 		try {		
-			ServerSocket s = new ServerSocket(myPort);
-			while(i < maxSimultaneousGame*2) {// Par défaut : Pas plus de 10 connexions simultanees -> donc 5 parties
+				ServerSocket s = new ServerSocket(myPort);
+				while(i < maxSimultaneousGame*2) {// Par défaut : Pas plus de 10 connexions simultanees -> donc 5 parties
+				//Socket socket = s.accept();
 				Socket socket = s.accept();
 				RefereePuissance4 smt = new RefereePuissance4(socket);
 				
-				if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectés au serveur.
-				{
-					//Permet d'envoyer le nom de l'aversaire au joueur sans entrer dans le run
-					PrintWriter sortietmp1 = new PrintWriter (socLastJoueur1.getOutputStream(), true);
-					PrintWriter sortietmp2 = new PrintWriter (socLastJoueur2.getOutputStream(), true);
-					sortietmp1.println(nameJoueur2);
-					sortietmp2.println(nameJoueur1);
-					
-					//On execute le thread qui gere le match de Puissance 4
-					smt.start();
-					StaticMethods.consolePrintln("Un match en cours, Identifiant du Thread :"+smt.getId()+" [ "+nameJoueur1+" vs "+nameJoueur2+" ]");
-				}
+					if((socLastJoueur1!=null) && (socLastJoueur2!=null))//Une fois les DEUX joueurs connectés au serveur.
+					{
+						//Permet d'envoyer le nom de l'aversaire au joueur sans entrer dans le run
+						PrintWriter sortietmp1 = new PrintWriter (socLastJoueur1.getOutputStream(), true);
+						PrintWriter sortietmp2 = new PrintWriter (socLastJoueur2.getOutputStream(), true);
+						
+						sortietmp1.println(nameJoueur2);
+						sortietmp2.println(nameJoueur1);
+						
+						//On execute le thread qui gere le match de Puissance 4
+						smt.start();
+						StaticMethods.consolePrintln("Un match en cours, Identifiant du Thread :"+smt.getId()+" [ "+nameJoueur1+" vs "+nameJoueur2+" ]");
+					}
 				++i; 
-			}
-			
+				}
 			s.close();
+		}catch (SocketException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_PLA_FAILED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
+			
 		} catch (IOException e) {
 			e.getMessage();
 		}

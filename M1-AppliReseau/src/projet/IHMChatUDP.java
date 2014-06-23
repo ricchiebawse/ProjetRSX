@@ -9,9 +9,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.net.SocketException;
+
 import javax.swing.JScrollPane;
 
 public class IHMChatUDP extends JFrame {
@@ -74,8 +76,9 @@ public class IHMChatUDP extends JFrame {
 					chat.sendMsg(txtSaisissezVotreMessage.getText());
 					txtSaisissezVotreMessage.setText("");
 				} catch (SocketException e) {
+					StaticMethods.consolePrintln(Consts.CONNEXION_OPP_INTERRUPTED);
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 		});

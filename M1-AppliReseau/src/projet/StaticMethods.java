@@ -3,6 +3,7 @@ package projet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public final class StaticMethods {
@@ -13,6 +14,9 @@ public final class StaticMethods {
 		String text=null;
 		try {
 			text = entree.readLine();
+		}catch (SocketException e){
+			StaticMethods.consolePrintln("Impossible de récuperer un message");
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

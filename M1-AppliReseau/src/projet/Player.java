@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -48,19 +49,27 @@ public class Player{
 			soc = new Socket(domain, port);
 			entree = new BufferedReader(new InputStreamReader(soc.getInputStream()));
 			sortie = new PrintWriter(soc.getOutputStream(),true);
+			sortie.println(myName);
+			//sortie.println(myName); // Envoie du nom du joueur a l'arbitre afin qu'il le diffuse a l'autre joueur
+			StaticMethods.consolePrintln("recherche de connexion avec l'autre joueur...");
+			
+			//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connect? ? l'arbitre).
+			nameOpponent = StaticMethods.receiveString(entree); 
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (ConnectException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_REF_FAILED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
+			
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		sortie.println(myName); // Envoie du nom du joueur a l'arbitre afin qu'il le diffuse a l'autre joueur
-		StaticMethods.consolePrintln("recherche de connexion avec l'autre joueur...");
-		
-		//EN ATTENTE : attente de reception du nom du joueur2 ( qu'une fois que ce dernier se sera connect? ? l'arbitre).
-		nameOpponent = StaticMethods.receiveString(entree); 
 		
 	}
 
@@ -69,65 +78,72 @@ public class Player{
 			connectToReferee(this.domainServer, this.portServer);
 			if(soc==null)
 			{
-				StaticMethods.consolePrintln(Consts.CONNEXION_ECHOUE);
+				StaticMethods.consolePrintln(Consts.CONNEXION_REF_FAILED);
 			}
 			else
 			{
-				StaticMethods.consolePrintln("Connexion effectuée avec " + nameOpponent);
-				StaticMethods.consolePrintln("Bon match !");
-				
-				//On recupère les informations de son adversaires : IP + PORT : Pour discuter avec lui par UDP
-				if(ipOpponent.equals("")){//Si on a pas encore les donnees de l'adversaire.
-					StaticMethods.sendString(Consts.MSG_DATA, sortie);
-					ipOpponent = StaticMethods.receiveString(entree);
-					portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
-				}
-				
-				StaticMethods.consolePrintln("Afficher les règles du jeu ? oui (par défaut) ou non");
-				String reponse = StaticMethods.getKeyboarding();
-				if(reponse.equals(ANSWER_NO))
-				{
-					//On envoie au serveur que le joueur ne souhaite pas récuperer les règles du jeu
-					StaticMethods.sendString(Consts.MSG_DECLINE, sortie);
-				}
-				else
-				{
-					StaticMethods.sendString(Consts.MSG_ACK, sortie);
+			
+					StaticMethods.consolePrintln("Connexion effectuée avec " + nameOpponent);
+					StaticMethods.consolePrintln("Bon match !");
 					
-					//On demande au serveur les regles du jeu
-					String rules="Règles du jeu :";
-					StaticMethods.consolePrintln(rules);
-					
-					//Le serveur nous envoies plusieurs string (séparé par des sauts de ligne) avec les regles du jeu, on affiche tant que le message n'est pas terminé
-					while(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
-					{
-						rules = StaticMethods.receiveString(entree);
-						if(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
-							StaticMethods.consolePrintln(rules);
+					//On recupère les informations de son adversaires : IP + PORT : Pour discuter avec lui par UDP
+					if(ipOpponent.equals("")){//Si on a pas encore les donnees de l'adversaire.
+						StaticMethods.sendString(Consts.MSG_DATA, sortie);
+						ipOpponent = StaticMethods.receiveString(entree);
+						portOpponent = Integer.parseInt(StaticMethods.receiveString(entree));
 					}
+					
+					StaticMethods.consolePrintln("Afficher les règles du jeu ? oui (par défaut) ou non");
+					String reponse = StaticMethods.getKeyboarding();
+					if(reponse.equals(ANSWER_NO))
+					{
+						//On envoie au serveur que le joueur ne souhaite pas récuperer les règles du jeu
+						StaticMethods.sendString(Consts.MSG_DECLINE, sortie);
+					}
+					else
+					{
+						StaticMethods.sendString(Consts.MSG_ACK, sortie);
+						
+						//On demande au serveur les regles du jeu
+						String rules="Règles du jeu :";
+						StaticMethods.consolePrintln(rules);
+						
+						//Le serveur nous envoies plusieurs string (séparé par des sauts de ligne) avec les regles du jeu, on affiche tant que le message n'est pas terminé
+						while(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
+						{
+							rules = StaticMethods.receiveString(entree);
+							if(!(rules.equals(Consts.MSG_END_OF_MESSAGE)))
+								StaticMethods.consolePrintln(rules);
+						}
+					}
+					
+					partie = Integer.parseInt(StaticMethods.receiveString(entree));
+					numPlayer = Integer.parseInt(StaticMethods.receiveString(entree));
+					StaticMethods.consolePrintln("Partie n°"+partie);
+					StaticMethods.consolePrintln("Vous êtes le joueur "+numPlayer);
+					//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
+					ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
+					
+					//Fonction jeu
+					turnGame();
+					
+					//Ferme la fenetre de chat
+					chat.endChat();
+					
+					//Fermeture des sockets instanciées
+					entree.close();
+					sortie.close();
+					soc.close();
 				}
 				
-				partie = Integer.parseInt(StaticMethods.receiveString(entree));
-				numPlayer = Integer.parseInt(StaticMethods.receiveString(entree));
-				StaticMethods.consolePrintln("Partie n°"+partie);
-				StaticMethods.consolePrintln("Vous êtes le joueur "+numPlayer);
-				//Instancier cette classe permet de chatter avec son adversaire (ipOpponent+portOpponent+nameOpponent) par UDP, via une fenêtre IHM
-				ChatUDP chat = new ChatUDP(soc.getLocalPort(), nameOpponent, ipOpponent, portOpponent, myName);		
-				
-				//Fonction jeu
-				turnGame();
-				
-				//Ferme la fenetre de chat
-				chat.endChat();
-				
-				//Fermeture des sockets instanciées
-				entree.close();
-				sortie.close();
-				soc.close();
-				
-			}
 			
 
+		}catch (ConnectException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_REF_INTERRUPTED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
+			
 		} catch (IOException e) {
 			e.getMessage();
 		}
@@ -136,6 +152,7 @@ public class Player{
 	
 	private void turnGame()
 	{
+		boolean matchEnd ;
 		String endRslt;
 		do
 		{//UN parcours de cette boucle corresponds à UN tour de Jeu.
@@ -143,13 +160,7 @@ public class Player{
 			//Deroulement d'un tour de jeu.
 			
 			//Permet de gérer le while (sinon parfois pas le temps de finir le isGameOver avant d'entamer une nouvelle boucle) A TESTER !
-			try {
-				Thread.currentThread();
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
 			StaticMethods.consolePrintln("Tour "+ gameTurn);
 			
 			String grid="";
@@ -159,7 +170,10 @@ public class Player{
 				temp = StaticMethods.receiveString(entree);
 				if(!(temp.equals(Consts.MSG_END_OF_MESSAGE)))
 				{
-					StaticMethods.consolePrintln(temp);
+					if((!(temp.equals(Consts.DEFEAT))&&(!(temp.equals(Consts.DEFEAT_BY_SURRENDER)))))
+					{
+						StaticMethods.consolePrintln(temp);
+					}
 					grid = temp;
 				}
 			}
@@ -203,7 +217,9 @@ public class Player{
 					endRslt = temp;
 			}
 			
-		}while((!isGameOver(endRslt)));
+			matchEnd = isGameOver(endRslt);
+			
+		}while((!matchEnd));
 	}
 	
 	

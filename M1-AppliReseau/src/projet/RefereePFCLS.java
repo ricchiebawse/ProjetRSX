@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 
@@ -256,6 +258,12 @@ public class RefereePFCLS extends Thread {
 			entreeJoueur2.close();
 			sortieJoueur2.close();
 			sortieJoueur1.close();
+		}catch (SocketException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_PLA_INTERRUPTED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
+			
 		} catch (IOException e) {
 			e.getMessage();
 		}
@@ -535,7 +543,13 @@ public class RefereePFCLS extends Thread {
 			
 			
 			s.close();
-		} catch (IOException e) {
+		} catch (SocketException e){
+			StaticMethods.consolePrintln(Consts.CONNEXION_PLA_FAILED);
+			
+		}catch (NullPointerException e){
+			StaticMethods.consolePrintln("Impossible d'envoyer à un des joueurs");
+			
+		}catch (IOException e) {
 			e.getMessage();
 		}
 	}
