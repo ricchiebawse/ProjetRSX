@@ -1,4 +1,4 @@
-package projet;
+
 
 public final class Consts {
 
