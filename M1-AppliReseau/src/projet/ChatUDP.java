@@ -39,10 +39,7 @@ public class ChatUDP extends Thread {
 					frame.setTextArea(nameOpponent+" : "+txtString);//on insère le string obtenu dans la JTextArea
 					packet.setData(buf,0,buf.length);
 			}
-		} catch (SocketException e) {
-			StaticMethods.consolePrintln(Consts.CONNEXION_OPP_INTERRUPTED);
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
+
 		}catch (IOException e) {
 			e.getMessage();
 		}
@@ -58,6 +55,7 @@ public class ChatUDP extends Thread {
 			//Envoie d'un packet contenant le string "msg" à l'adversaire (idOpponent, portOpponent)
 			DatagramSocket socket = new DatagramSocket();
 			byte [] buf =msg.getBytes("ASCII");
+			
 			DatagramPacket packet = new DatagramPacket (buf,buf.length,InetAddress.getByName(ipOpponent.substring(1)) ,portOpponent);
 			socket.send(packet);
 			//Fermeture de la socket

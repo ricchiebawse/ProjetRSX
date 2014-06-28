@@ -22,6 +22,7 @@ public static final String CONNEXION_OPP_FAILED="La connexion avec l'adversaire 
 public static final String CONNEXION_REF_INTERRUPTED="La connexion avec le serveur a été interrompu";
 public static final String CONNEXION_PLA_INTERRUPTED="La connexion avec un joueur a été interrompu";
 public static final String CONNEXION_OPP_INTERRUPTED="La connexion avec l'adversaire a été interrompu";
+public static final String CONNEXION_REF_NOT_MATCH="Aucun chemin d'accès pour atteindre le serveur de jeu - Mauvais IP";
 public static final String MSG_DECLINE="0";
 public static final String MSG_ACK="1";
 public static final String MSG_END_OF_MESSAGE="0";

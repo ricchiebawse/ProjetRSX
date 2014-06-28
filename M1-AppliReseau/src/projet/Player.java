@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -65,6 +66,10 @@ public class Player{
 			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
 			
 		}
+		catch (NoRouteToHostException e){
+        StaticMethods.consolePrintln(Consts.CONNEXION_REF_NOT_MATCH);
+		}
+		
 		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -143,8 +148,8 @@ public class Player{
 			
 		}catch (NullPointerException e){
 			StaticMethods.consolePrintln("Impossible d'envoyer au serveur");
-			
-		} catch (IOException e) {
+		}	
+		catch (IOException e) {
 			e.getMessage();
 		}
 		
@@ -313,7 +318,7 @@ public class Player{
 		
 		if(args.length>0){
 			if(args[0]!=null){ servIP=args[0]; }
-			if(args[1]!=null){ servPort=Integer.parseInt(args[1]); }
+			if(args.length>1 && args[1]!=null){ servPort=Integer.parseInt(args[1]); }
 			}
 
 

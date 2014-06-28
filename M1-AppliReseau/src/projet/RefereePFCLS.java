@@ -512,7 +512,7 @@ public class RefereePFCLS extends Thread {
 
 		if(args.length>0){
 		if(args[0]!=null){ myPort=Integer.parseInt(args[0]); }
-		if(args[1]!=null){ maxSimultaneousGame=Integer.parseInt(args[1]); }
+		if(args.length>1 && args[1]!=null){ maxSimultaneousGame=Integer.parseInt(args[1]); }
 		}
 		
 
